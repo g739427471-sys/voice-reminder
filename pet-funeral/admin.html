@@ -14,6 +14,31 @@
             --danger-color: #e74c3c;
         }
 
+        /* 通知气泡 */
+        #notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .toast {
+            background: white;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         /* 打印样式 */
         @media print {
             body { background: white; display: block; }
@@ -390,6 +415,12 @@
         </div>
     </div>
 
+    <!-- 打印模板 -->
+    <!-- ... (inv-template) ... -->
+
+    <!-- 通知容器 -->
+    <div id="notification-container"></div>
+
     <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
     <script>
         const AuthService = {
@@ -647,12 +678,62 @@
         });
 
         // --- 订单操作 ---
+        // 实时监听订单更新 (storage 事件)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'pet_orders') {
+                const oldOrders = e.oldValue ? JSON.parse(e.oldValue) : [];
+                const newOrders = e.newValue ? JSON.parse(e.newValue) : [];
+                
+                // 如果订单数量增加，说明有新订单
+                if (newOrders.length > oldOrders.length) {
+                    const latestOrder = newOrders[newOrders.length - 1];
+                    showNotification(latestOrder);
+                    renderOrders(); // 刷新列表
+                }
+            }
+        });
+
+        function showNotification(order) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; margin-bottom:5px;">新订单提醒!</div>
+                    <div style="font-size:0.9rem; color:#666;">
+                        订单号: ${order.id}<br>
+                        金额: ¥${order.total.toFixed(2)}
+                    </div>
+                </div>
+                <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer; font-size:1.2rem; color:#999;">&times;</button>
+            `;
+            container.appendChild(toast);
+            
+            // 播放提示音 (可选)
+            // const audio = new Audio('notification.mp3'); audio.play().catch(e=>{});
+
+            // 5秒后自动消失
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
         function completeOrder(id) {
+            updateOrderStatus(id, '已完成');
+        }
+
+        function shipOrder(id) {
+            updateOrderStatus(id, '已发货');
+        }
+
+        function updateOrderStatus(id, status) {
             let orders = getOrders();
-            const order = orders.find(o => o.id === id);
-            if (order) {
-                order.status = '已完成';
-                saveOrders(orders);
+            const index = orders.findIndex(o => o.id === id);
+            if (index !== -1) {
+                orders[index].status = status;
+                localStorage.setItem('pet_orders', JSON.stringify(orders)); // 这会触发其他页面的 storage 事件，但当前页面不会
+                renderOrders();
             }
         }
 

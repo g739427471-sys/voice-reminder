@@ -577,6 +577,10 @@
                         <p id="modal-full-desc" style="line-height:1.6; color:#555;"></p>
                         <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px;">
                             <h5><i class="fas fa-shield-alt"></i> 服务保障</h5>
+                            <div style="display:flex; gap:10px; margin-bottom:5px;">
+                                <span style="background:#fff0f0; color:#e74c3c; padding:2px 5px; border-radius:4px; font-size:0.8rem;">7天无理由退换</span>
+                                <span style="background:#fff0f0; color:#e74c3c; padding:2px 5px; border-radius:4px; font-size:0.8rem;">30天价保</span>
+                            </div>
                             <p style="font-size:0.85rem; color:#888; margin-top:5px;">
                                 <i class="fas fa-check-circle"></i> 实名认证商家<br>
                                 <i class="fas fa-check-circle"></i> 24小时专属客服<br>
@@ -601,7 +605,7 @@
                     <div style="background:white; padding:15px; border-radius:8px; position:sticky; top:0;">
                         <h2 id="modal-right-price" style="color:#e74c3c; font-size:1.8rem; margin-bottom:10px;"></h2>
                         <div style="margin-bottom:15px; color:#666; font-size:0.9rem;">
-                            销量: <span id="modal-sales">1000+</span> | 评分: <span style="color:#f1c40f">4.9</span>
+                            销量: <span id="modal-sales">1000+</span> | 评分: <span style="color:#f1c40f">4.9</span> | 库存: <span id="modal-stock">--</span>
                         </div>
                         
                         <!-- 动态表单区域 -->
@@ -735,7 +739,8 @@
                 desc: "定制刻字，永久保存爱宠照片与信息",
                 price: 199,
                 category: "memorial",
-                type: "goods", // 实物商品
+                type: "goods",
+                stock: 99,
                 sales: 230,
                 rating: 4.9,
                 image: "https://images.unsplash.com/photo-1620407632601-38c232c69476?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -746,7 +751,8 @@
                 desc: "高透水晶材质，内置镭射内雕，防潮密封",
                 price: 399,
                 category: "memorial",
-                type: "goods", // 实物商品
+                type: "goods",
+                stock: 15,
                 sales: 85,
                 rating: 4.7,
                 image: "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -757,7 +763,8 @@
                 desc: "点亮一盏长明灯，照亮它回家的路 (7天)",
                 price: 9.9,
                 category: "virtual",
-                type: "service", // 虚拟服务
+                type: "service",
+                stock: 9999,
                 sales: 1540,
                 rating: 5.0,
                 image: "https://images.unsplash.com/photo-1542665093-36614488b394?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -768,7 +775,8 @@
                 desc: "专车接送，独立告别室，全程影像记录",
                 price: 1299,
                 category: "service",
-                type: "service", // 殡葬服务
+                type: "service",
+                stock: 5,
                 sales: 42,
                 rating: 4.9,
                 image: "https://images.unsplash.com/photo-1596395819057-d375226c7830?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -965,9 +973,42 @@
         }
 
         // --- 升级版结算逻辑 ---
-        function checkout() {
-            if (cart.length === 0) return alert('购物车是空的');
+        let currentCheckoutItems = []; // 当前结算的商品列表
+
+        function buyNow() {
+            // 获取弹窗中的信息
+            const petNameInput = document.getElementById('modal-pet-name');
+            const petMsgInput = document.getElementById('modal-pet-msg');
+            const petName = petNameInput ? petNameInput.value : null;
+            const msg = petMsgInput ? petMsgInput.value : null;
+            
+            // 服务类校验
+            const isService = currentModalProduct.type === 'service' || currentModalProduct.category === 'virtual' || currentModalProduct.category === 'service';
+            if (isService && !petName) {
+                return alert('请填写爱宠姓名');
+            }
+
+            // 构造单品列表
+            const item = {
+                ...currentModalProduct,
+                qty: 1,
+                petName,
+                petMessage: msg
+            };
+            
+            // 直接进入结算，不加购物车
+            checkout([item]);
+            closeProductModal();
+        }
+
+        function checkout(directItems = null) {
+            // 如果传入 directItems，说明是立即购买；否则是购物车结算
+            const itemsToCheckout = directItems || cart;
+            
+            if (itemsToCheckout.length === 0) return alert('请选择商品');
             if (!AuthService.requireLogin()) return;
+
+            currentCheckoutItems = itemsToCheckout;
 
             // 打开结算弹窗
             document.getElementById('checkout-modal').style.display = 'block';
@@ -982,7 +1023,7 @@
             let total = 0;
             let count = 0;
             
-            cart.forEach(item => {
+            currentCheckoutItems.forEach(item => {
                 const subtotal = item.price * item.qty;
                 total += subtotal;
                 count += item.qty;
@@ -1008,6 +1049,7 @@
         function closeCheckoutModal() {
             document.getElementById('checkout-modal').style.display = 'none';
             document.getElementById('checkout-overlay').style.display = 'none';
+            currentCheckoutItems = [];
         }
 
         function submitOrder() {
@@ -1021,8 +1063,8 @@
                 id: 'ORD-' + Date.now(),
                 userId: user.id,
                 userName: user.name,
-                items: cart,
-                total: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+                items: currentCheckoutItems, // 使用当前结算列表
+                total: currentCheckoutItems.reduce((sum, item) => sum + item.price * item.qty, 0),
                 address: address, // 保存地址快照
                 payMethod: document.querySelector('input[name="pay-method"]:checked').value,
                 date: new Date().toLocaleString(),
@@ -1033,13 +1075,17 @@
             orders.push(newOrder);
             localStorage.setItem('pet_orders', JSON.stringify(orders));
             
-            cart = [];
-            updateCartUI();
+            // 如果是购物车结算，清空购物车；如果是立即购买，不影响购物车
+            if (currentCheckoutItems === cart) {
+                cart = [];
+                updateCartUI();
+                toggleCart(); // 关闭侧边栏
+            }
+            
             closeCheckoutModal();
-            toggleCart(); // 关闭侧边栏
             
             // 模拟支付成功页
-            alert(`支付成功！\n订单号: ${newOrder.id}\n支付金额: ¥${newOrder.total}\n我们将尽快发货至: ${address.region} ${address.detail}`);
+            alert(`支付成功！\n订单号: ${newOrder.id}\n支付金额: ¥${newOrder.total.toFixed(2)}\n我们将尽快发货至: ${address.region} ${address.detail}`);
         }
 
         // --- 核心展示逻辑 (搜索/排序/筛选) ---
@@ -1163,6 +1209,7 @@
             document.getElementById('modal-product-title').innerText = product.name;
             document.getElementById('modal-right-price').innerText = '¥' + product.price;
             document.getElementById('modal-sales').innerText = (product.sales || 0) + '+';
+            document.getElementById('modal-stock').innerText = (product.stock !== undefined ? product.stock : 99);
             document.getElementById('modal-full-desc').innerText = product.desc + "\n\n(此处为详细描述占位符，展示商品的详细规格、材质、服务流程等信息。)";
 
             // 动态表单 (完全依赖后台配置的 type)
@@ -1175,18 +1222,22 @@
             const formArea = document.getElementById('modal-form-area');
             const actionBtn = document.getElementById('modal-action-btn');
             
+            // 检查库存
+            const stock = product.stock !== undefined ? product.stock : 99;
+            const isOutOfStock = stock <= 0;
+
             if (isService) {
                 formArea.innerHTML = `
                     <div class="form-group" style="text-align:left; margin-bottom:15px;">
                         <label style="font-weight:bold; display:block; margin-bottom:5px;">爱宠姓名</label>
-                        <input type="text" id="modal-pet-name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+                        <input type="text" id="modal-pet-name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;" ${isOutOfStock?'disabled':''}>
                     </div>
                     <div class="form-group" style="text-align:left; margin-bottom:15px;">
                         <label style="font-weight:bold; display:block; margin-bottom:5px;">寄语/备注</label>
-                        <textarea id="modal-pet-msg" rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;"></textarea>
+                        <textarea id="modal-pet-msg" rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;" ${isOutOfStock?'disabled':''}></textarea>
                     </div>
                 `;
-                actionBtn.innerText = '立即预约';
+                actionBtn.innerText = isOutOfStock ? '预约已满' : '立即预约';
                 actionBtn.onclick = handleModalAction; // 预约逻辑
             } else {
                 formArea.innerHTML = `
@@ -1194,11 +1245,31 @@
                         <i class="fas fa-truck"></i> 快递发货 · 48小时内发出
                     </div>
                 `;
-                actionBtn.innerText = '立即购买';
+                actionBtn.innerText = isOutOfStock ? '暂时缺货' : '立即购买';
                 actionBtn.onclick = () => {
                     addToCartFromModal(false); 
-                    checkout(); // 立即购买 = 加购 + 结算
+                    // 立即购买，不走购物车，直接结算 (修改：传递单品参数)
+                    // 但这里 addToCartFromModal 逻辑是加购物车。我们需要区分。
+                    // 修正逻辑：点击“立即购买”时，不加购物车，而是直接打开结算弹窗。
+                    buyNow();
                 };
+            }
+            
+            // 禁用按钮
+            if(isOutOfStock) {
+                actionBtn.disabled = true;
+                actionBtn.style.background = '#ccc';
+                document.querySelector('button[onclick="addToCartFromModal(true)"]').disabled = true;
+                document.querySelector('button[onclick="addToCartFromModal(true)"]').style.background = '#ccc';
+            } else {
+                actionBtn.disabled = false;
+                actionBtn.style.background = ''; // 恢复默认
+                // 恢复购物车按钮 (需要重新获取元素，因为上面可能修改了 actionBtn)
+                const cartBtn = document.querySelector('button[onclick="addToCartFromModal(true)"]');
+                if(cartBtn) {
+                   cartBtn.disabled = false;
+                   cartBtn.style.background = '#f39c12';
+                }
             }
 
             // 生成模拟评价和问答
