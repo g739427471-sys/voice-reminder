@@ -441,7 +441,38 @@
         </div>
     </div>
 
-    <script src="js/auth.js"></script>
+    <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
+    <script>
+        const AuthService = {
+            // 前台不需要定义用户列表，只负责读取状态
+            isAuthenticated() {
+                const token = localStorage.getItem('pet_auth_token');
+                return !!token;
+            },
+
+            getCurrentUser() {
+                const userStr = localStorage.getItem('pet_current_user');
+                return userStr ? JSON.parse(userStr) : null;
+            },
+
+            logout() {
+                localStorage.removeItem('pet_auth_token');
+                localStorage.removeItem('pet_current_user');
+                window.location.reload();
+            },
+
+            requireLogin(redirectUrl = 'login.html') {
+                if (!this.isAuthenticated()) {
+                    sessionStorage.setItem('auth_redirect', window.location.href);
+                    window.location.href = redirectUrl;
+                    return false;
+                }
+                return true;
+            }
+        };
+        window.AuthService = AuthService;
+    </script>
+
     <script>
         // --- 模拟数据库 (LocalStorage) ---
         // 初始化默认数据

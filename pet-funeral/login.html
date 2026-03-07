@@ -210,7 +210,7 @@
         </div>
     </div>
 
-    <!-- 1. 权限管理模块 -->
+    <!-- 1. 内嵌核心权限逻辑 (确保加载) -->
     <script>
         const AuthService = {
             users: [
@@ -219,24 +219,20 @@
                     username: 'xzcdd',
                     password: '521125xnx',
                     role: 'admin',
-                    name: '超级管理员',
-                    avatar: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'
+                    name: '超级管理员'
                 },
                 {
                     id: 'user_001',
                     username: 'user',
                     password: '123',
                     role: 'user',
-                    name: '普通用户',
-                    avatar: 'https://ui-avatars.com/api/?name=User&background=random'
+                    name: '普通用户'
                 }
             ],
 
             isAuthenticated() {
                 const token = localStorage.getItem('pet_auth_token');
-                if (!token) return false;
-                // 简单检查 Token 格式
-                return token.split('.').length === 3;
+                return !!token; // 只要 token 存在就认为已登录
             },
 
             getCurrentUser() {
@@ -270,24 +266,14 @@
             },
 
             _createSession(user) {
-                const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-                // 修复：移除可能包含中文的 name 字段，防止 btoa 报错
-                // 完整的用户信息已经保存在 pet_current_user 里了，Token 里只存核心 ID 即可
-                const payload = btoa(JSON.stringify({
-                    sub: user.id,
-                    role: user.role,
-                    iat: Date.now(),
-                    exp: Date.now() + 1000 * 60 * 60 * 24 * 7
-                }));
-               const token = `header.payload.signature-${Date.now()}`;
-                
+                // 生成一个简单的 Token 标识
+                const token = `token-${user.id}-${Date.now()}`;
                 localStorage.setItem('pet_auth_token', token);
                 localStorage.setItem('pet_current_user', JSON.stringify(user));
             }
         };
+        window.AuthService = AuthService;
     </script>
-
-    <!-- 2. 页面交互逻辑 -->
     <script>
         function switchTab(type) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -297,12 +283,15 @@
             document.getElementById(type + '-form').classList.remove('hidden');
         }
 
+        // 模拟发送验证码
         function sendCaptcha(btn) {
             btn.disabled = true;
             let count = 60;
             btn.innerText = `${count}s后重试`;
+            
             alert('【模拟短信】您的验证码是：123456');
             document.getElementById('mobile-code').value = '123456';
+
             const timer = setInterval(() => {
                 count--;
                 btn.innerText = `${count}s后重试`;
@@ -314,8 +303,9 @@
             }, 1000);
         }
 
+        // 处理登录
         async function handleLogin(type, data) {
-            const btn = document.querySelector('.login-form:not(.hidden) button');
+            const btn = document.querySelector(`#${type}-form button[type="submit"]`);
             if(btn) {
                 btn.disabled = true;
                 btn.innerText = '登录中...';
@@ -324,6 +314,7 @@
             try {
                 const res = await AuthService.login({ type, ...data });
                 if (res.success) {
+                    // 跳转逻辑
                     const redirect = sessionStorage.getItem('auth_redirect') || 'index.html';
                     sessionStorage.removeItem('auth_redirect');
                     window.location.href = redirect;
@@ -356,4 +347,3 @@
     </script>
 </body>
 </html>
-
