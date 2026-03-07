@@ -1,68 +1,46 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2805430435176806"
-     crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能语音提醒器 (Smart Voice Reminder)</title>
-    <!-- Font Awesome for icons -->
+    <title>我的个人网站 - xzcdd.com</title>
+    <!-- 字体图标 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
             --bg-color: #f4f6f9;
-            --sidebar-bg: #2c3e50;
-            --sidebar-text: #ecf0f1;
-            --content-bg: #ffffff;
             --text-color: #333;
-            --accent-color: #3498db;
-            --success-color: #2ecc71;
-            --warning-color: #f1c40f;
-            --danger-color: #e74c3c;
-            --border-color: #e0e0e0;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #1a1a1a;
-            --sidebar-bg: #000000;
-            --sidebar-text: #dcdcdc;
-            --content-bg: #2d2d2d;
-            --text-color: #ecf0f1;
-            --accent-color: #2980b9;
-            --border-color: #444;
+            --card-bg: #fff;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
         }
 
-        .app-container {
+        /* 导航栏 */
+        .navbar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 1rem 2rem;
             display: flex;
-            height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .logo {
             font-size: 1.5rem;
-            margin-bottom: 30px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -71,1242 +49,174 @@
 
         .nav-links {
             list-style: none;
-            flex: 1;
+            display: flex;
+            gap: 20px;
         }
 
-        .nav-links li {
-            padding: 15px 10px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            transition: background 0.2s;
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.3s;
         }
 
-        .nav-links li:hover, .nav-links li.active {
+        .nav-links a:hover {
             background-color: rgba(255,255,255,0.1);
         }
 
-        .nav-links li i {
-            margin-right: 10px;
-            width: 20px;
+        /* 主体内容 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero {
             text-align: center;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
         }
 
-        .theme-toggle {
-            margin-top: auto;
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
         }
 
-        #theme-btn {
-            background: none;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: var(--sidebar-text);
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            transition: 0.3s;
+        .hero p {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        #theme-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            background-color: var(--content-bg);
-            border-top-left-radius: 20px;
-            border-bottom-left-radius: 20px;
-            margin: 10px 10px 10px 0;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
-        }
-
-        .view {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-
-        .view.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Dashboard Stats */
-        .dashboard-stats {
+        /* 功能区网格 */
+        .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
         }
 
-        .stat-card {
-            background: var(--bg-color);
-            padding: 20px;
+        .feature-card {
+            background: var(--card-bg);
             border-radius: 10px;
+            padding: 2rem;
             text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        .stat-card h3 {
-            font-size: 1rem;
-            color: var(--text-color);
-            opacity: 0.8;
-        }
-
-        .stat-card p {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-top: 10px;
-        }
-
-        /* Forms & Inputs */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="time"],
-        input[type="datetime-local"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            background: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        button {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #eee;
             cursor: pointer;
-            border: none;
-            border-radius: 5px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .feature-desc {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            display: inline-block;
             padding: 10px 20px;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-color);
+            background-color: var(--primary-color);
             color: white;
-        }
-
-        .btn-primary:hover {
-            filter: brightness(1.1);
-        }
-
-        .btn-secondary {
-            background-color: #95a5a6;
-            color: white;
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        
-        .btn-emergency {
-            background-color: var(--danger-color);
-            color: white;
-            font-weight: bold;
-            display: none;
-            animation: pulse 2s infinite;
-        }
-        
-        .btn-emergency.visible {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-        
-        /* Checkbox Group */
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            font-weight: normal;
-        }
-
-        /* Time Slot & Reminder Lists */
-        .card-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--bg-color);
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 5px solid var(--accent-color);
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-        }
-
-        .card h3 {
-            margin-bottom: 10px;
-        }
-
-        .card .meta {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        
-        .text-success { color: var(--success-color) !important; }
-        .text-danger { color: var(--danger-color) !important; }
-
-        .card-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .card-actions button {
-            padding: 5px 10px;
-            font-size: 0.8rem;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--content-bg);
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        
-        .view-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .filter-bar {
-            margin-bottom: 20px;
-        }
-
-        /* Timeline */
-        .timeline {
-            position: relative;
-            padding: 20px 0;
-            border-left: 2px solid var(--border-color);
-            margin-left: 20px;
-        }
-
-        .timeline-item {
-            margin-bottom: 20px;
-            padding-left: 20px;
-            position: relative;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 5px;
-            width: 10px;
-            height: 10px;
-            background: var(--accent-color);
-            border-radius: 50%;
-        }
-
-        .timeline-time {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-        }
-
-        .timeline-content {
-            background: var(--bg-color);
-            padding: 10px;
             border-radius: 5px;
-            margin-top: 5px;
-            border: 1px solid var(--border-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s;
         }
 
-        /* Utility */
-        .hidden { display: none; }
-        .badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            color: white;
+        .btn:hover {
+            background-color: #2980b9;
         }
-        .badge-low { background-color: #95a5a6; }
-        .badge-medium { background-color: var(--accent-color); }
-        .badge-high { background-color: var(--danger-color); }
+
+        /* 页脚 */
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="logo">
-                <i class="fas fa-bullhorn"></i> 语音提醒器
-            </div>
-            <ul class="nav-links">
-                <li class="active" data-view="dashboard">
-                    <i class="fas fa-home"></i> 概览
-                </li>
-                <li data-view="timeslots">
-                    <i class="fas fa-clock"></i> 时间段管理
-                </li>
-                <li data-view="reminders">
-                    <i class="fas fa-bell"></i> 提醒事项
-                </li>
-                <li data-view="settings">
-                    <i class="fas fa-cog"></i> 设置
-                </li>
-            </ul>
-            <div class="theme-toggle">
-                <button id="theme-btn" title="切换深色/浅色模式">
-                    <i class="fas fa-moon"></i>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Header -->
-            <header>
-                <h1 id="page-title">概览</h1>
-                <button id="emergency-stop-btn" class="btn-emergency"><i class="fas fa-stop-circle"></i> 停止提醒</button>
-                <div class="current-time" id="current-time">00:00:00</div>
-            </header>
-
-            <!-- Dashboard View -->
-            <section id="dashboard" class="view active">
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <h3>今日提醒</h3>
-                        <p id="today-reminders-count">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>活跃时间段</h3>
-                        <p id="active-timeslot">无</p>
-                    </div>
-                </div>
-                <div class="timeline-container">
-                    <h3>今日时间轴</h3>
-                    <div class="timeline" id="timeline">
-                        <!-- Timeline items will be injected here -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Time Slots View -->
-            <section id="timeslots" class="view">
-                <div class="view-header">
-                    <h2>时间段列表</h2>
-                    <button class="btn-primary" id="add-timeslot-btn"><i class="fas fa-plus"></i> 新建时间段</button>
-                </div>
-                <div class="card-list" id="timeslots-list">
-                    <!-- Time slots will be injected here -->
-                </div>
-            </section>
-
-            <!-- Reminders View -->
-            <section id="reminders" class="view">
-                <div class="view-header">
-                    <h2>提醒事项</h2>
-                    <button class="btn-primary" id="add-reminder-btn"><i class="fas fa-plus"></i> 新建提醒</button>
-                </div>
-                <div class="filter-bar">
-                    <select id="reminder-filter">
-                        <option value="all">全部</option>
-                        <option value="pending">待提醒</option>
-                        <option value="completed">已完成</option>
-                    </select>
-                </div>
-                <div class="card-list" id="reminders-list">
-                    <!-- Reminders will be injected here -->
-                </div>
-            </section>
-
-            <!-- Settings View -->
-            <section id="settings" class="view">
-                <div class="settings-group">
-                    <h3>语音设置</h3>
-                    <div class="form-group">
-                        <label>选择语音</label>
-                        <select id="voice-select"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>语速 (Rate): <span id="rate-value">1.0</span></label>
-                        <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>音调 (Pitch): <span id="pitch-value">1.0</span></label>
-                        <input type="range" id="pitch" min="0" max="2" step="0.1" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>音量 (Volume): <span id="volume-value">1.0</span></label>
-                        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
-                    </div>
-                    <button class="btn-secondary" id="test-voice-btn">测试语音</button>
-                </div>
-                <div class="settings-group" style="margin-top: 30px;">
-                    <h3>数据管理</h3>
-                    <button class="btn-danger" id="clear-data-btn">清除所有数据</button>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <!-- Add Time Slot Modal -->
-    <div id="timeslot-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>新建时间段</h2>
-            <form id="timeslot-form">
-                <div class="form-group">
-                    <label>名称</label>
-                    <input type="text" name="name" required placeholder="例如：工作时间">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>开始时间</label>
-                        <input type="time" name="start" required>
-                    </div>
-                    <div class="form-group">
-                        <label>结束时间</label>
-                        <input type="time" name="end" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>重复规则</label>
-                    <div class="checkbox-group" id="timeslot-days">
-                        <label><input type="checkbox" value="1" checked> 周一</label>
-                        <label><input type="checkbox" value="2" checked> 周二</label>
-                        <label><input type="checkbox" value="3" checked> 周三</label>
-                        <label><input type="checkbox" value="4" checked> 周四</label>
-                        <label><input type="checkbox" value="5" checked> 周五</label>
-                        <label><input type="checkbox" value="6"> 周六</label>
-                        <label><input type="checkbox" value="0"> 周日</label>
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary">保存</button>
-            </form>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-cube"></i> xzcdd.com
         </div>
+        <ul class="nav-links">
+            <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
+            <li><a href="#features"><i class="fas fa-th-large"></i> 功能区</a></li>
+            <li><a href="#"><i class="fas fa-user"></i> 关于我</a></li>
+        </ul>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="container">
+        <section class="hero">
+            <h1>欢迎来到我的个人工具站</h1>
+            <p>这里汇集了我开发的各种实用小工具，希望能提高你的工作和生活效率。</p>
+        </section>
+
+        <section id="features" class="features-grid">
+            <!-- 工具卡片 1：语音提醒器 -->
+            <a href="/reminder/" class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bullhorn"></i>
+                </div>
+                <h3 class="feature-title">智能语音提醒器</h3>
+                <p class="feature-desc">支持自定义时间段、循环播报、倒计时的Web版语音提醒工具，无需下载安装。</p>
+                <span class="btn">立即使用 <i class="fas fa-arrow-right"></i></span>
+            </a>
+
+            <!-- 工具卡片 2：预留位 (示例) -->
+            <div class="feature-card" style="opacity: 0.7; cursor: default;">
+                <div class="feature-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="feature-title">更多工具开发中...</h3>
+                <p class="feature-desc">敬请期待更多实用功能上线。</p>
+                <span class="btn" style="background-color: #ccc;">敬请期待</span>
+            </div>
+        </section>
     </div>
 
-    <!-- Add Reminder Modal -->
-    <div id="reminder-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>新建提醒</h2>
-            <form id="reminder-form">
-                <div class="form-group">
-                    <label>提醒内容</label>
-                    <textarea name="content" required maxlength="200" placeholder="请输入提醒内容..." style="height: 80px;"></textarea>
-                    <div style="text-align: right; font-size: 12px; color: #888;">限200字</div>
-                </div>
-                <div class="form-group">
-                    <label>提醒类型</label>
-                    <select name="type" id="reminder-type-select">
-                        <option value="specific">具体时间</option>
-                        <option value="relative">相对时间 (倒计时)</option>
-                    </select>
-                </div>
-                
-                <div id="specific-time-group">
-                    <div class="form-group">
-                        <label>时间点</label>
-                        <input type="datetime-local" name="datetime">
-                    </div>
-                    <div class="form-group">
-                        <label>重复规则</label>
-                        <select name="recurrence" id="recurrence-select">
-                            <option value="none">不重复</option>
-                            <option value="daily">每天</option>
-                            <option value="weekly">每周</option>
-                            <option value="monthly">每月</option>
-                            <option value="custom">自定义间隔</option>
-                        </select>
-                    </div>
-                    <div id="custom-recurrence-group" style="display:none; background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label>每隔</label>
-                            <div class="form-row">
-                                <input type="number" name="custom-interval-val" min="1" value="1">
-                                <select name="custom-interval-unit">
-                                    <option value="minutes">分钟</option>
-                                    <option value="hours">小时</option>
-                                    <option value="days">天</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="relative-time-group" style="display:none;">
-                    <div class="form-group">
-                        <label>延迟时间</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="number" name="delay-val" min="1" value="30">
-                            <select name="delay-unit">
-                                <option value="minutes">分钟</option>
-                                <option value="hours">小时</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- New Section: Voice Loop Settings -->
-                <div class="settings-group-modal" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; margin-bottom: 15px;">
-                    <h3 style="font-size: 1rem; margin-bottom: 10px;">语音循环设置</h3>
-                    <div class="form-group">
-                        <label>循环模式</label>
-                        <div class="checkbox-group">
-                            <label><input type="radio" name="loop-mode" value="fixed" checked> 固定次数</label>
-                            <label><input type="radio" name="loop-mode" value="infinite"> 无限循环</label>
-                        </div>
-                    </div>
-                    <div class="form-group" id="loop-count-group">
-                        <label>循环次数 (1-10)</label>
-                        <input type="number" name="loop-count" min="1" max="10" value="3">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>提前提醒</label>
-                    <select name="advance-notice">
-                        <option value="0">不提前</option>
-                        <option value="5">提前5分钟</option>
-                        <option value="15">提前15分钟</option>
-                        <option value="30">提前30分钟</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>优先级</label>
-                    <select name="priority">
-                        <option value="low">低</option>
-                        <option value="medium" selected>中</option>
-                        <option value="high">高</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="btn-primary">保存</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // --- State Management ---
-        const state = {
-            timeslots: [],
-            reminders: [],
-            settings: {
-                voiceURI: null,
-                rate: 1.0,
-                pitch: 1.0,
-                volume: 1.0,
-                theme: 'light'
-            }
-        };
-
-        // Audio Loop State
-        let audioState = {
-            isPlaying: false,
-            reminderId: null,
-            remainingLoops: 0,
-            mode: 'fixed' // fixed, infinite
-        };
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            setupEventListeners();
-            initTheme();
-            initTTS();
-            renderAll();
-            startTimerLoop();
-            
-            // Set default datetime to now
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.querySelector('input[name="datetime"]').value = now.toISOString().slice(0, 16);
-        });
-
-        // --- Persistence ---
-        function loadData() {
-            const savedState = localStorage.getItem('voiceReminderState');
-            if (savedState) {
-                const parsed = JSON.parse(savedState);
-                state.timeslots = parsed.timeslots || [];
-                state.reminders = parsed.reminders || [];
-                state.settings = { ...state.settings, ...parsed.settings };
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('voiceReminderState', JSON.stringify(state));
-            renderAll();
-        }
-
-        // --- UI Navigation ---
-        function setupEventListeners() {
-            // Navigation
-            document.querySelectorAll('.nav-links li').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-                    document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-                    
-                    item.classList.add('active');
-                    const viewId = item.getAttribute('data-view');
-                    document.getElementById(viewId).classList.add('active');
-                    
-                    // Update header title
-                    const titles = {
-                        'dashboard': '概览',
-                        'timeslots': '时间段管理',
-                        'reminders': '提醒事项',
-                        'settings': '设置'
-                    };
-                    document.getElementById('page-title').innerText = titles[viewId];
-                });
-            });
-
-            // Theme Toggle
-            document.getElementById('theme-btn').addEventListener('click', toggleTheme);
-            
-            // Emergency Stop
-            document.getElementById('emergency-stop-btn').addEventListener('click', stopPlayback);
-
-            // Modals
-            setupModal('add-timeslot-btn', 'timeslot-modal');
-            setupModal('add-reminder-btn', 'reminder-modal');
-
-            // Forms
-            document.getElementById('timeslot-form').addEventListener('submit', handleAddTimeslot);
-            document.getElementById('reminder-form').addEventListener('submit', handleAddReminder);
-
-            // Reminder Type Toggle
-            document.getElementById('reminder-type-select').addEventListener('change', (e) => {
-                const specificGroup = document.getElementById('specific-time-group');
-                const relativeGroup = document.getElementById('relative-time-group');
-                if (e.target.value === 'specific') {
-                    specificGroup.style.display = 'block';
-                    relativeGroup.style.display = 'none';
-                } else {
-                    specificGroup.style.display = 'none';
-                    relativeGroup.style.display = 'block';
-                }
-            });
-            
-            // Custom Recurrence Toggle
-            document.getElementById('recurrence-select').addEventListener('change', (e) => {
-                const customGroup = document.getElementById('custom-recurrence-group');
-                if (e.target.value === 'custom') {
-                    customGroup.style.display = 'block';
-                } else {
-                    customGroup.style.display = 'none';
-                }
-            });
-
-            // Loop Mode Toggle
-            document.querySelectorAll('input[name="loop-mode"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    const countGroup = document.getElementById('loop-count-group');
-                    if (e.target.value === 'fixed') {
-                        countGroup.style.display = 'block';
-                    } else {
-                        countGroup.style.display = 'none';
-                    }
-                });
-            });
-            
-            // Reminder Filter
-            document.getElementById('reminder-filter').addEventListener('change', renderReminders);
-
-            // Settings
-            document.getElementById('rate').addEventListener('input', (e) => {
-                state.settings.rate = parseFloat(e.target.value);
-                document.getElementById('rate-value').innerText = state.settings.rate;
-                saveData();
-            });
-            document.getElementById('pitch').addEventListener('input', (e) => {
-                state.settings.pitch = parseFloat(e.target.value);
-                document.getElementById('pitch-value').innerText = state.settings.pitch;
-                saveData();
-            });
-            document.getElementById('volume').addEventListener('input', (e) => {
-                state.settings.volume = parseFloat(e.target.value);
-                document.getElementById('volume-value').innerText = state.settings.volume;
-                saveData();
-            });
-            document.getElementById('voice-select').addEventListener('change', (e) => {
-                state.settings.voiceURI = e.target.value;
-                saveData();
-            });
-            document.getElementById('test-voice-btn').addEventListener('click', () => {
-                speak('这是一个语音测试。你好，主人。');
-                requestNotificationPermission();
-            });
-            document.getElementById('clear-data-btn').addEventListener('click', () => {
-                if(confirm('确定要清除所有数据吗？此操作无法撤销。')) {
-                    localStorage.clear();
-                    location.reload();
-                }
-            });
-        }
-
-        function setupModal(btnId, modalId) {
-            const modal = document.getElementById(modalId);
-            const btn = document.getElementById(btnId);
-            const close = modal.querySelector('.close');
-
-            btn.onclick = () => modal.style.display = 'flex';
-            close.onclick = () => modal.style.display = 'none';
-            window.onclick = (e) => {
-                if (e.target == modal) modal.style.display = 'none';
-            }
-        }
-
-        function requestNotificationPermission() {
-            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                Notification.requestPermission();
-            }
-        }
-
-        // --- Theme Logic ---
-        function initTheme() {
-            document.documentElement.setAttribute('data-theme', state.settings.theme);
-            const icon = document.querySelector('#theme-btn i');
-            icon.className = state.settings.theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-
-        function toggleTheme() {
-            state.settings.theme = state.settings.theme === 'light' ? 'dark' : 'light';
-            initTheme();
-            saveData();
-        }
-
-        // --- Time Slot Logic ---
-        function handleAddTimeslot(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const days = Array.from(document.querySelectorAll('#timeslot-days input:checked')).map(cb => parseInt(cb.value));
-            
-            if (days.length === 0) {
-                alert('请至少选择一天');
-                return;
-            }
-
-            const newSlot = {
-                id: Date.now().toString(),
-                name: formData.get('name'),
-                start: formData.get('start'),
-                end: formData.get('end'),
-                days: days
-            };
-
-            if (checkTimeslotConflict(newSlot)) {
-                alert('时间段冲突！请检查该时间段是否与现有的重叠。');
-                return;
-            }
-
-            state.timeslots.push(newSlot);
-            saveData();
-            e.target.reset();
-            document.getElementById('timeslot-modal').style.display = 'none';
-        }
-
-        function checkTimeslotConflict(newSlot) {
-            const getMinutes = (timeStr) => {
-                const [h, m] = timeStr.split(':').map(Number);
-                return h * 60 + m;
-            };
-            
-            const newStart = getMinutes(newSlot.start);
-            const newEnd = getMinutes(newSlot.end);
-
-            if (newStart >= newEnd) {
-                alert('结束时间必须晚于开始时间');
-                return true; 
-            }
-
-            return state.timeslots.some(slot => {
-                const daysOverlap = newSlot.days.some(day => slot.days.includes(day));
-                if (!daysOverlap) return false;
-
-                const slotStart = getMinutes(slot.start);
-                const slotEnd = getMinutes(slot.end);
-
-                return (newStart < slotEnd && newEnd > slotStart);
-            });
-        }
-
-        window.deleteTimeslot = function(id) {
-            if(confirm('确定删除此时间段吗？')) {
-                state.timeslots = state.timeslots.filter(t => t.id !== id);
-                saveData();
-            }
-        };
-
-        // --- Reminder Logic ---
-        function handleAddReminder(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const type = formData.get('type');
-            let targetTime;
-            let recurrence = 'none';
-            let customInterval = null;
-
-            if (type === 'specific') {
-                const dt = formData.get('datetime');
-                if (!dt) {
-                    alert('请选择时间');
-                    return;
-                }
-                targetTime = new Date(dt).getTime();
-                recurrence = formData.get('recurrence');
-                
-                if (recurrence === 'custom') {
-                    customInterval = {
-                        value: parseInt(formData.get('custom-interval-val')),
-                        unit: formData.get('custom-interval-unit')
-                    };
-                }
-            } else {
-                const delayVal = parseInt(formData.get('delay-val'));
-                const delayUnit = formData.get('delay-unit');
-                const multiplier = delayUnit === 'hours' ? 3600000 : 60000;
-                targetTime = Date.now() + (delayVal * multiplier);
-            }
-
-            // Loop Settings
-            const loopMode = formData.get('loop-mode');
-            const loopCount = loopMode === 'fixed' ? parseInt(formData.get('loop-count')) : 0;
-
-            const newReminder = {
-                id: Date.now().toString(),
-                content: formData.get('content'),
-                targetTime: targetTime,
-                type: type,
-                recurrence: recurrence,
-                customInterval: customInterval,
-                loopMode: loopMode,
-                loopCount: loopCount,
-                advanceNotice: parseInt(formData.get('advance-notice')),
-                priority: formData.get('priority'),
-                status: 'pending',
-                notified: false,
-                advanceNotified: false
-            };
-            
-            requestNotificationPermission();
-
-            state.reminders.push(newReminder);
-            saveData();
-            e.target.reset();
-            // Reset modal visibility states
-            document.getElementById('specific-time-group').style.display = 'block';
-            document.getElementById('relative-time-group').style.display = 'none';
-            document.getElementById('custom-recurrence-group').style.display = 'none';
-            document.getElementById('loop-count-group').style.display = 'block';
-            document.getElementById('reminder-modal').style.display = 'none';
-        }
-
-        window.deleteReminder = function(id) {
-            if(confirm('确定删除此提醒吗？')) {
-                state.reminders = state.reminders.filter(r => r.id !== id);
-                saveData();
-            }
-        };
-
-        // --- TTS & Loop Logic ---
-        let voices = [];
-
-        function initTTS() {
-            const loadVoices = () => {
-                voices = speechSynthesis.getVoices();
-                const select = document.getElementById('voice-select');
-                if (voices.length === 0) return;
-                
-                select.innerHTML = '';
-                voices.sort((a, b) => {
-                    if (a.lang.includes('zh') && !b.lang.includes('zh')) return -1;
-                    if (!a.lang.includes('zh') && b.lang.includes('zh')) return 1;
-                    return 0;
-                });
-
-                voices.forEach(voice => {
-                    const option = document.createElement('option');
-                    option.value = voice.voiceURI;
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    if (voice.voiceURI === state.settings.voiceURI) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
-                
-                if (!state.settings.voiceURI && voices.length > 0) {
-                    const zhVoice = voices.find(v => v.lang.includes('zh'));
-                    state.settings.voiceURI = zhVoice ? zhVoice.voiceURI : voices[0].voiceURI;
-                }
-                
-                document.getElementById('rate').value = state.settings.rate;
-                document.getElementById('rate-value').innerText = state.settings.rate;
-                document.getElementById('pitch').value = state.settings.pitch;
-                document.getElementById('pitch-value').innerText = state.settings.pitch;
-                document.getElementById('volume').value = state.settings.volume;
-                document.getElementById('volume-value').innerText = state.settings.volume;
-            };
-
-            speechSynthesis.onvoiceschanged = loadVoices;
-            setTimeout(loadVoices, 100);
-            setTimeout(loadVoices, 1000);
-        }
-
-        function speak(text, onEnd) {
-            if (!text) return;
-            // Only cancel if we are forcing a new speech from user interaction,
-            // or if it's the start of a loop chain.
-            // Inside a loop, we wait for the previous one to finish naturally.
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voice = voices.find(v => v.voiceURI === state.settings.voiceURI);
-            if (voice) utterance.voice = voice;
-            
-            utterance.rate = state.settings.rate;
-            utterance.pitch = state.settings.pitch;
-            utterance.volume = state.settings.volume;
-
-            if (onEnd) {
-                utterance.onend = onEnd;
-            }
-
-            speechSynthesis.speak(utterance);
-        }
-
-        function playReminder(reminder) {
-            // Stop any current playback first
-            if (audioState.isPlaying) {
-                speechSynthesis.cancel();
-            }
-
-            audioState = {
-                isPlaying: true,
-                reminderId: reminder.id,
-                remainingLoops: reminder.loopMode === 'fixed' ? reminder.loopCount : 9999,
-                mode: reminder.loopMode
-            };
-
-            updateStopButton();
-            playLoop(reminder.content);
-        }
-
-        function playLoop(content) {
-            if (!audioState.isPlaying) return;
-            
-            if (audioState.mode === 'fixed' && audioState.remainingLoops <= 0) {
-                stopPlayback(false); // Finished naturally
-                return;
-            }
-
-            speak(`提醒您：${content}`, () => {
-                // Determine if we should continue
-                if (audioState.isPlaying) {
-                    if (audioState.mode === 'fixed') {
-                        audioState.remainingLoops--;
-                    }
-                    // Add a small pause between loops
-                    setTimeout(() => playLoop(content), 1000);
-                }
-            });
-        }
-
-        function stopPlayback(speakFeedback = true) {
-            audioState.isPlaying = false;
-            audioState.reminderId = null;
-            speechSynthesis.cancel();
-            updateStopButton();
-            
-            if (speakFeedback) {
-                setTimeout(() => speak('提醒已停止'), 200);
-            }
-        }
-
-        function updateStopButton() {
-            const btn = document.getElementById('emergency-stop-btn');
-            if (audioState.isPlaying) {
-                btn.classList.add('visible');
-            } else {
-                btn.classList.remove('visible');
-            }
-        }
-
-        // --- Timer Loop & Scheduling ---
-        function startTimerLoop() {
-            setInterval(() => {
-                const now = Date.now();
-                document.getElementById('current-time').innerText = new Date().toLocaleTimeString();
-                
-                state.reminders.forEach(reminder => {
-                    if (reminder.status === 'completed') return;
-
-                    // Advance Notice (Only speak once, no loop)
-                    if (reminder.advanceNotice > 0 && !reminder.advanceNotified) {
-                        const advanceTime = reminder.targetTime - (reminder.advanceNotice * 60000);
-                        if (now >= advanceTime && now < reminder.targetTime && (now - advanceTime < 60000)) {
-                            speak(`即将提醒：${reminder.content}`);
-                            reminder.advanceNotified = true;
-                            saveData();
-                        }
-                    }
-
-                    // Main Reminder
-                    if (now >= reminder.targetTime && !reminder.notified) {
-                        // Start the loop
-                        playReminder(reminder);
-                        
-                        if (Notification.permission === "granted") {
-                            new Notification("语音提醒", { body: reminder.content });
-                        }
-
-                        reminder.notified = true;
-
-                        if (reminder.recurrence !== 'none') {
-                            handleRecurrence(reminder);
-                        } else {
-                            reminder.status = 'completed';
-                        }
-                        saveData();
-                    }
-                });
-            }, 1000);
-        }
-
-        function handleRecurrence(reminder) {
-            const nextTime = new Date(reminder.targetTime);
-            
-            if (reminder.recurrence === 'daily') nextTime.setDate(nextTime.getDate() + 1);
-            else if (reminder.recurrence === 'weekly') nextTime.setDate(nextTime.getDate() + 7);
-            else if (reminder.recurrence === 'monthly') nextTime.setMonth(nextTime.getMonth() + 1);
-            else if (reminder.recurrence === 'custom' && reminder.customInterval) {
-                const val = reminder.customInterval.value;
-                const unit = reminder.customInterval.unit;
-                if (unit === 'minutes') nextTime.setMinutes(nextTime.getMinutes() + val);
-                if (unit === 'hours') nextTime.setHours(nextTime.getHours() + val);
-                if (unit === 'days') nextTime.setDate(nextTime.getDate() + val);
-            }
-            
-            reminder.targetTime = nextTime.getTime();
-            reminder.notified = false;
-            reminder.advanceNotified = false;
-        }
-
-        // --- Rendering ---
-        function renderAll() {
-            renderTimeslots();
-            renderReminders();
-            renderDashboard();
-        }
-
-        function renderTimeslots() {
-            const container = document.getElementById('timeslots-list');
-            container.innerHTML = '';
-            
-            const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-
-            state.timeslots.forEach(slot => {
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `
-                    <h3>${slot.name}</h3>
-                    <div class="meta">
-                        <i class="fas fa-clock"></i> ${slot.start} - ${slot.end}
-                        <br>
-                        <i class="fas fa-calendar"></i> 周${slot.days.map(d => dayNames[d]).join('、')}
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-danger" onclick="deleteTimeslot('${slot.id}')">删除</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function renderReminders() {
-            const container = document.getElementById('reminders-list');
-            container.innerHTML = '';
-            
-            const filter = document.getElementById('reminder-filter').value;
-            
-            state.reminders
-                .filter(r => {
-                    if (filter === 'all') return true;
-                    if (filter === 'pending') return r.status === 'pending';
-                    if (filter === 'completed') return r.status === 'completed';
-                })
-                .sort((a, b) => a.targetTime - b.targetTime)
-                .forEach(reminder => {
-                    const date = new Date(reminder.targetTime);
-                    const isPast = date < new Date() && reminder.status !== 'completed';
-                    const statusClass = reminder.status === 'completed' ? 'text-success' : (isPast ? 'text-danger' : '');
-                    
-                    let recurrenceText = '';
-                    if (reminder.recurrence === 'custom') {
-                        const {value, unit} = reminder.customInterval;
-                        const unitMap = {minutes:'分', hours:'小时', days:'天'};
-                        recurrenceText = `每${value}${unitMap[unit]}`;
-                    } else if (reminder.recurrence !== 'none') {
-                        const map = {daily:'每天', weekly:'每周', monthly:'每月'};
-                        recurrenceText = map[reminder.recurrence];
-                    }
-
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    div.innerHTML = `
-                        <h3>${reminder.content}</h3>
-                        <div class="meta ${statusClass}">
-                            <i class="fas fa-clock"></i> ${date.toLocaleString()}
-                            <br>
-                            <span class="badge badge-${reminder.priority}">${reminder.priority.toUpperCase()}</span>
-                            ${recurrenceText ? `<i class="fas fa-sync"></i> ${recurrenceText}` : ''}
-                            <br>
-                            <small style="color:#aaa">
-                                ${reminder.loopMode === 'infinite' ? '∞ 循环' : `循环 ${reminder.loopCount} 次`}
-                            </small>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-danger" onclick="deleteReminder('${reminder.id}')">删除</button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-        }
-
-        function renderDashboard() {
-            // Stats
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            const todayCount = state.reminders.filter(r => 
-                r.targetTime >= today.getTime() && r.targetTime < tomorrow.getTime()
-            ).length;
-            document.getElementById('today-reminders-count').innerText = todayCount;
-
-            // Active Timeslot
-            const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-            const currentDay = now.getDay();
-            
-            const activeSlot = state.timeslots.find(slot => {
-                if (!slot.days.includes(currentDay)) return false;
-                const [sh, sm] = slot.start.split(':').map(Number);
-                const [eh, em] = slot.end.split(':').map(Number);
-                const start = sh * 60 + sm;
-                const end = eh * 60 + em;
-                return currentMinutes >= start && currentMinutes <= end;
-            });
-            
-            document.getElementById('active-timeslot').innerText = activeSlot ? activeSlot.name : '休息时间';
-
-            // Timeline
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = '';
-            
-            // Sort upcoming reminders
-            const upcoming = state.reminders
-                .filter(r => r.status === 'pending' && r.targetTime > Date.now())
-                .sort((a, b) => a.targetTime - b.targetTime)
-                .slice(0, 5); // Show next 5
-
-            if (upcoming.length === 0) {
-                timeline.innerHTML = '<p style="color:#7f8c8d; padding-left:20px;">暂无待办提醒</p>';
-            } else {
-                upcoming.forEach(r => {
-                    const div = document.createElement('div');
-                    div.className = 'timeline-item';
-                    div.innerHTML = `
-                        <div class="timeline-time">${new Date(r.targetTime).toLocaleTimeString()}</div>
-                        <div class="timeline-content">
-                            <strong>${r.content}</strong>
-                        </div>
-                    `;
-                    timeline.appendChild(div);
-                });
-            }
-        }
-    </script>
+    <!-- 页脚 -->
+    <footer>
+        <p>&copy; 2024 xzcdd.com 版权所有</p>
+    </footer>
 </body>
 </html>
