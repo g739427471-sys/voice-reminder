@@ -3,230 +3,1061 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人网站 - xzcdd.com</title>
-    <!-- 字体图标 -->
+    <title>宠物殡葬服务专区 - xzcdd.com</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --bg-color: #f4f6f9;
+            --primary-color: #8e44ad; /* 紫色系，庄重温情 */
+            --secondary-color: #ecf0f1;
             --text-color: #333;
-            --card-bg: #fff;
+            --light-text: #666;
+            --border-color: #ddd;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: #f9f9f9;
             color: var(--text-color);
-            line-height: 1.6;
         }
 
         /* 导航栏 */
         .navbar {
-            background-color: var(--secondary-color);
-            color: white;
+            background-color: #fff;
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .logo {
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .brand {
             font-size: 1.5rem;
             font-weight: bold;
+            color: var(--primary-color);
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .nav-links {
-            list-style: none;
+        .nav-right {
             display: flex;
             gap: 20px;
+            align-items: center;
         }
 
-        .nav-links a {
+        .cart-btn {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #e74c3c;
             color: white;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: background 0.3s;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .nav-links a:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        /* 主体内容 */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
+        /* 轮播/Hero区域 */
         .hero {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
             text-align: center;
-            padding: 4rem 0;
-            margin-bottom: 2rem;
         }
 
         .hero h1 {
             font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--secondary-color);
+            margin-bottom: 10px;
         }
 
-        .hero p {
-            font-size: 1.2rem;
-            color: #666;
-            max-width: 600px;
-            margin: 0 auto;
+        /* 分类导航 */
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        /* 功能区网格 */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 2rem;
-            text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: 1px solid #eee;
+        .category-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+            background: transparent;
+            transition: all 0.3s;
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        .category-btn.active, .category-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
             border-color: var(--primary-color);
         }
 
-        .feature-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
+        /* 商品列表 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        .feature-title {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--secondary-color);
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
         }
 
-        .feature-desc {
-            color: #666;
-            margin-bottom: 1.5rem;
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-img {
+            height: 200px;
+            background-color: #eee;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-info {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .product-desc {
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-bottom: 10px;
+            flex: 1;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 10px;
             background-color: var(--primary-color);
             color: white;
+            border: none;
             border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background 0.3s;
+            cursor: pointer;
+            transition: background 0.2s;
         }
 
-        .btn:hover {
-            background-color: #2980b9;
+        .add-btn:hover {
+            background-color: #7d3c98;
         }
 
-        /* 页脚 */
-        footer {
-            background-color: var(--secondary-color);
+        /* 购物车侧边栏 */
+        .cart-sidebar {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 350px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-sidebar.open {
+            right: 0;
+        }
+
+        .cart-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-color);
             color: white;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 4rem;
         }
 
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-links {
-                width: 100%;
-                justify-content: center;
-            }
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .cart-item-price {
+            color: #e74c3c;
+            font-size: 0.9rem;
+        }
+
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .qty-btn {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cart-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: #f9f9f9;
+        }
+
+        .total-price {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* 筛选栏与搜索 */
+        .filter-bar {
+            background: white;
+            padding: 15px 20px;
+            margin: 0 auto;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sort-btn {
+            cursor: pointer;
+            color: #666;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sort-btn.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            width: 250px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+        }
+
+        /* 详情页弹窗升级 */
+        .service-content {
+            width: 800px; /* 加宽 */
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: left; /* 左对齐 */
+            padding: 0;
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal-body {
+            padding: 20px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .modal-left {
+            flex: 1;
+        }
+
+        .modal-right {
+            width: 300px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .detail-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .detail-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .detail-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+
+        .review-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .review-text {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 150;
+        }
+
+        .overlay.active {
+            display: block;
         }
     </style>
 </head>
 <body>
     <!-- 导航栏 -->
     <nav class="navbar">
-        <div class="logo">
-            <i class="fas fa-cube"></i> xzcdd.com
+        <div class="nav-left">
+            <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> 返回主页</a>
+            <div class="brand">
+                <i class="fas fa-paw"></i> 宠爱天堂
+            </div>
         </div>
-        <ul class="nav-links">
-            <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
-            <li><a href="#features"><i class="fas fa-th-large"></i> 功能区</a></li>
-            <li><a href="#"><i class="fas fa-user"></i> 关于我</a></li>
-        </ul>
+        <div class="nav-right">
+            <div id="user-area">
+                <!-- 动态显示登录状态 -->
+                <a href="login.html" style="text-decoration:none; color:#666; font-size:0.9rem;">
+                    <i class="fas fa-user-circle"></i> 登录 / 注册
+                </a>
+            </div>
+            <div class="cart-btn" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </div>
+        </div>
     </nav>
 
-    <!-- 主体内容 -->
-    <div class="container">
-        <section class="hero">
-            <h1>欢迎来到我的个人工具站</h1>
-            <p>这里汇集了我开发的各种实用小工具，希望能提高你的工作和生活效率。</p>
-        </section>
+    <!-- Hero -->
+    <section class="hero">
+        <div>
+            <h1>给它最后的温柔与尊严</h1>
+            <p>专业的宠物善终服务，让爱不留遗憾</p>
+        </div>
+    </section>
 
-        <section id="features" class="features-grid">
-            <!-- 工具卡片 1：语音提醒器 -->
-            <a href="/reminder/" class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-bullhorn"></i>
-                </div>
-                <h3 class="feature-title">智能语音提醒器</h3>
-                <p class="feature-desc">支持自定义时间段、循环播报、倒计时的Web版语音提醒工具，无需下载安装。</p>
-                <span class="btn">立即使用 <i class="fas fa-arrow-right"></i></span>
-            </a>
-
-            <!-- 工具卡片 2：宠物殡葬服务 -->
-            <a href="/pet-funeral/" class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-paw"></i>
-                </div>
-                <h3 class="feature-title">宠物殡葬服务</h3>
-                <p class="feature-desc">提供全流程宠物善终服务，包含纪念品选购、在线祈福、虚拟灵堂等关怀服务。</p>
-                <span class="btn">进入专区 <i class="fas fa-arrow-right"></i></span>
-            </a>
-
-            <!-- 工具卡片 3：预留位 (示例) -->
-            <div class="feature-card" style="opacity: 0.7; cursor: default;">
-                <div class="feature-icon">
-                    <i class="fas fa-tools"></i>
-                </div>
-                <h3 class="feature-title">更多工具开发中...</h3>
-                <p class="feature-desc">敬请期待更多实用功能上线。</p>
-                <span class="btn" style="background-color: #ccc;">敬请期待</span>
-            </div>
-        </section>
+    <!-- 分类 -->
+    <div class="categories">
+        <button class="category-btn active" onclick="filterProducts('all')">全部</button>
+        <button class="category-btn" onclick="filterProducts('memorial')">纪念用品</button>
+        <button class="category-btn" onclick="filterProducts('virtual')">云祈福</button>
+        <button class="category-btn" onclick="filterProducts('service')">殡葬服务</button>
     </div>
 
-    <!-- 页脚 -->
-    <footer>
-        <p>&copy; 2024 xzcdd.com 版权所有</p>
-    </footer>
+    <!-- 筛选与搜索 -->
+    <div class="filter-bar">
+        <div class="sort-options">
+            <div class="sort-btn active" onclick="sortProducts('default')">综合</div>
+            <div class="sort-btn" onclick="sortProducts('sales')">销量</div>
+            <div class="sort-btn" onclick="sortProducts('price')">价格 <i class="fas fa-sort"></i></div>
+        </div>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="搜索商品/服务..." onkeyup="searchProducts(this.value)">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+    </div>
+
+    <!-- 商品列表 -->
+    <div class="container">
+        <div class="product-grid" id="product-list">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+
+    <!-- 购物车侧边栏 -->
+    <div class="overlay" id="cart-overlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h3>购物车</h3>
+            <span onclick="toggleCart()" style="cursor:pointer">&times;</span>
+        </div>
+        <div class="cart-items" id="cart-items">
+            <!-- 动态生成 -->
+        </div>
+        <div class="cart-footer">
+            <div class="total-price">
+                <span>合计:</span>
+                <span id="cart-total">¥0.00</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">去结算</button>
+        </div>
+    </div>
+
+    <!-- 商品/服务详情弹窗 (升级版) -->
+    <div class="overlay" id="product-modal-overlay" onclick="closeProductModal()"></div>
+    <div class="service-modal" id="product-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:200; background:white; border-radius:8px; width:900px; max-width:95%; max-height:90vh; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.2);">
+        <div class="modal-header">
+            <h3 id="modal-product-title">商品详情</h3>
+            <span onclick="closeProductModal()" style="cursor:pointer; font-size:1.5rem">&times;</span>
+        </div>
+        
+        <div class="service-content" style="width:100%; height:calc(90vh - 60px); overflow-y:auto; padding:0; display:flex; flex-direction:column;">
+            <div class="modal-body">
+                <!-- 左侧：图片与详情 -->
+                <div class="modal-left">
+                    <div class="product-gallery" style="margin-bottom:20px;">
+                        <img src="" id="modal-main-img" style="width:100%; height:300px; object-fit:cover; border-radius:8px;">
+                    </div>
+                    
+                    <div class="detail-tabs">
+                        <div class="detail-tab active" onclick="switchTab('detail')">详情</div>
+                        <div class="detail-tab" onclick="switchTab('reviews')">评价 (99+)</div>
+                        <div class="detail-tab" onclick="switchTab('qa')">问大家 (12)</div>
+                    </div>
+                    
+                    <div id="tab-detail" class="tab-content active">
+                        <h4 style="margin-bottom:10px;">服务/商品介绍</h4>
+                        <p id="modal-full-desc" style="line-height:1.6; color:#555;"></p>
+                        <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px;">
+                            <h5><i class="fas fa-shield-alt"></i> 服务保障</h5>
+                            <p style="font-size:0.85rem; color:#888; margin-top:5px;">
+                                <i class="fas fa-check-circle"></i> 实名认证商家<br>
+                                <i class="fas fa-check-circle"></i> 24小时专属客服<br>
+                                <i class="fas fa-check-circle"></i> 不满意极速退款
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-reviews" class="tab-content">
+                        <!-- 动态生成评价 -->
+                        <div id="reviews-list"></div>
+                    </div>
+                    
+                    <div id="tab-qa" class="tab-content">
+                        <!-- 动态生成问答 -->
+                        <div id="qa-list"></div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：操作区 (吸顶效果需配合父级) -->
+                <div class="modal-right">
+                    <div style="background:white; padding:15px; border-radius:8px; position:sticky; top:0;">
+                        <h2 id="modal-right-price" style="color:#e74c3c; font-size:1.8rem; margin-bottom:10px;"></h2>
+                        <div style="margin-bottom:15px; color:#666; font-size:0.9rem;">
+                            销量: <span id="modal-sales">1000+</span> | 评分: <span style="color:#f1c40f">4.9</span>
+                        </div>
+                        
+                        <!-- 动态表单区域 -->
+                        <div id="modal-form-area">
+                            <!-- 根据类型动态插入：服务时间/宠物信息等 -->
+                        </div>
+                        
+                        <div style="margin-top:20px;">
+                            <button class="add-btn" id="modal-action-btn" onclick="handleModalAction()">立即预约</button>
+                            <button class="add-btn" style="background:#f39c12; margin-top:10px;" onclick="addToCartFromModal(true)">加入购物车</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
+    <script>
+        const AuthService = {
+            // 前台不需要定义用户列表，只负责读取状态
+            isAuthenticated() {
+                const token = localStorage.getItem('pet_auth_token');
+                return !!token;
+            },
+
+            getCurrentUser() {
+                const userStr = localStorage.getItem('pet_current_user');
+                return userStr ? JSON.parse(userStr) : null;
+            },
+
+            logout() {
+                localStorage.removeItem('pet_auth_token');
+                localStorage.removeItem('pet_current_user');
+                window.location.reload();
+            },
+
+            requireLogin(redirectUrl = 'login.html') {
+                if (!this.isAuthenticated()) {
+                    sessionStorage.setItem('auth_redirect', window.location.href);
+                    window.location.href = redirectUrl;
+                    return false;
+                }
+                return true;
+            }
+        };
+        window.AuthService = AuthService;
+    </script>
+
+    <script>
+        // --- 模拟数据库 (LocalStorage) ---
+        // 初始化默认数据 (增加销量和评分字段用于演示排序)
+        const defaultProducts = [
+            {
+                id: 1,
+                name: "纯铜纪念币",
+                desc: "定制刻字，永久保存爱宠照片与信息",
+                price: 199,
+                category: "memorial",
+                sales: 230,
+                rating: 4.9,
+                image: "https://images.unsplash.com/photo-1620407632601-38c232c69476?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+            },
+            {
+                id: 2,
+                name: "水晶骨灰盅",
+                desc: "高透水晶材质，内置镭射内雕，防潮密封",
+                price: 399,
+                category: "memorial",
+                sales: 85,
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+            },
+            {
+                id: 3,
+                name: "云端祈福灯",
+                desc: "点亮一盏长明灯，照亮它回家的路 (7天)",
+                price: 9.9,
+                category: "virtual",
+                sales: 1540,
+                rating: 5.0,
+                image: "https://images.unsplash.com/photo-1542665093-36614488b394?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+            },
+            {
+                id: 4,
+                name: "私人订制葬礼",
+                desc: "专车接送，独立告别室，全程影像记录",
+                price: 1299,
+                category: "service",
+                sales: 42,
+                rating: 4.9,
+                image: "https://images.unsplash.com/photo-1596395819057-d375226c7830?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+            }
+        ];
+
+        // 全局状态
+        let currentCategory = 'all';
+        let currentSort = 'default';
+        let currentSearch = '';
+        let currentModalProduct = null;
+
+        // 获取商品数据
+        function getProducts() {
+            const stored = localStorage.getItem('pet_products');
+            if (!stored) {
+                localStorage.setItem('pet_products', JSON.stringify(defaultProducts));
+                return defaultProducts;
+            }
+            return JSON.parse(stored);
+        }
+
+        // --- 购物车逻辑 ---
+        let cart = JSON.parse(localStorage.getItem('pet_cart')) || [];
+
+        function updateCartUI() {
+            const count = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-count').innerText = count;
+            
+            const itemsContainer = document.getElementById('cart-items');
+            itemsContainer.innerHTML = '';
+            
+            let total = 0;
+            
+            cart.forEach(item => {
+                total += item.price * item.qty;
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${item.name} ${item.petName ? `(${item.petName})` : ''}</div>
+                        <div class="cart-item-price">¥${item.price}</div>
+                        <div class="cart-controls">
+                            <div class="qty-btn" onclick="updateQty(${item.id}, -1)">-</div>
+                            <span>${item.qty}</span>
+                            <div class="qty-btn" onclick="updateQty(${item.id}, 1)">+</div>
+                        </div>
+                    </div>
+                `;
+                itemsContainer.appendChild(div);
+            });
+            
+            document.getElementById('cart-total').innerText = '¥' + total.toFixed(2);
+            localStorage.setItem('pet_cart', JSON.stringify(cart));
+        }
+
+        function addToCart(product, petName = null, petMessage = null) {
+            const existing = cart.find(item => item.id === product.id && item.petName === petName);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({
+                    ...product,
+                    qty: 1,
+                    petName,
+                    petMessage
+                });
+            }
+            updateCartUI();
+            
+            const btn = document.querySelector('.cart-btn');
+            btn.style.transform = 'scale(1.2)';
+            setTimeout(() => btn.style.transform = 'scale(1)', 200);
+            
+            alert('已加入购物车');
+        }
+
+        function updateQty(id, change) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += change;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+                updateCartUI();
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-sidebar').classList.toggle('open');
+            document.getElementById('cart-overlay').classList.toggle('active');
+        }
+
+        function checkout() {
+            if (cart.length === 0) return alert('购物车是空的');
+            if (!AuthService.requireLogin()) return;
+
+            const orders = JSON.parse(localStorage.getItem('pet_orders')) || [];
+            const user = AuthService.getCurrentUser();
+            
+            const newOrder = {
+                id: 'ORD-' + Date.now(),
+                userId: user.id,
+                userName: user.name,
+                items: cart,
+                total: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+                date: new Date().toLocaleString(),
+                status: '待处理'
+            };
+            
+            orders.push(newOrder);
+            localStorage.setItem('pet_orders', JSON.stringify(orders));
+            
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            alert('订单提交成功！请等待工作人员联系。');
+        }
+
+        // --- 核心展示逻辑 (搜索/排序/筛选) ---
+
+        function renderProducts() {
+            let products = getProducts();
+            
+            // 1. 分类筛选
+            if (currentCategory !== 'all') {
+                products = products.filter(p => p.category === currentCategory);
+            }
+            
+            // 2. 关键词搜索
+            if (currentSearch) {
+                const term = currentSearch.toLowerCase();
+                products = products.filter(p => p.name.toLowerCase().includes(term) || p.desc.toLowerCase().includes(term));
+            }
+            
+            // 3. 排序
+            if (currentSort === 'sales') {
+                products.sort((a, b) => (b.sales || 0) - (a.sales || 0));
+            } else if (currentSort === 'price') {
+                products.sort((a, b) => a.price - b.price);
+            }
+            
+            // 4. 渲染
+            const container = document.getElementById('product-list');
+            container.innerHTML = '';
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">没有找到相关商品/服务</div>';
+            } else {
+                products.forEach(p => {
+                    // 判断是否为服务类
+                    const isService = p.type === 'service' || p.category === 'virtual' || p.category === 'service';
+                    const btnText = isService ? '立即预约' : '加入购物车';
+                    const btnIcon = isService ? 'fa-calendar-check' : 'fa-shopping-cart';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'product-card';
+                    // 点击卡片任意位置打开详情
+                    div.onclick = (e) => {
+                        // 如果点击的是按钮，不触发卡片点击（虽然按钮逻辑也是开详情，但为了逻辑清晰）
+                        if(e.target.closest('.add-btn')) return;
+                        openProductModal(p);
+                    };
+                    
+                    div.innerHTML = `
+                        <div class="product-img" style="background-image: url('${p.image}')"></div>
+                        <div class="product-info">
+                            <div class="product-title">${p.name}</div>
+                            <div class="product-desc">${p.desc}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div class="product-price">¥${p.price}</div>
+                                <div style="font-size:0.8rem; color:#999;">销量 ${p.sales || 0}</div>
+                            </div>
+                            <button class="add-btn" onclick="handleCardBtnClick(${p.id})">
+                                <i class="fas ${btnIcon}"></i> ${btnText}
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // 更新 UI 状态
+            updateFilterUI();
+        }
+
+        function handleCardBtnClick(id) {
+            const p = getProducts().find(i => i.id === id);
+            // 服务/虚拟商品直接开弹窗，实物商品也开弹窗（模仿淘宝，先看详情）
+            // 或者：实物直接加购物车，服务开弹窗。
+            // 策略：统一打开详情页，体验更好
+            openProductModal(p);
+        }
+
+        function filterProducts(cat) {
+            currentCategory = cat;
+            renderProducts();
+        }
+
+        function sortProducts(type) {
+            currentSort = type;
+            renderProducts();
+        }
+
+        function searchProducts(val) {
+            currentSearch = val;
+            renderProducts();
+        }
+
+        function updateFilterUI() {
+            // 分类按钮
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                const cat = btn.getAttribute('onclick').match(/'(.*)'/)[1];
+                btn.className = `category-btn ${cat === currentCategory ? 'active' : ''}`;
+            });
+            
+            // 排序按钮
+            const sortMap = { 'default': 0, 'sales': 1, 'price': 2 };
+            document.querySelectorAll('.sort-btn').forEach((btn, idx) => {
+                btn.className = `sort-btn ${idx === sortMap[currentSort] ? 'active' : ''}`;
+            });
+        }
+
+        // --- 详情页弹窗逻辑 (Tab切换/动态数据) ---
+
+        function openProductModal(product) {
+            currentModalProduct = product;
+            const modal = document.getElementById('product-modal');
+            const overlay = document.getElementById('product-modal-overlay');
+            
+            // 基础信息
+            document.getElementById('modal-main-img').src = product.image;
+            document.getElementById('modal-product-title').innerText = product.name;
+            document.getElementById('modal-right-price').innerText = '¥' + product.price;
+            document.getElementById('modal-sales').innerText = (product.sales || 0) + '+';
+            document.getElementById('modal-full-desc').innerText = product.desc + "\n\n(此处为详细描述占位符，展示商品的详细规格、材质、服务流程等信息。)";
+
+            // 动态表单 (如果是服务/虚拟商品，显示输入框)
+            const isService = product.type === 'service' || product.category === 'virtual' || product.category === 'service';
+            const formArea = document.getElementById('modal-form-area');
+            const actionBtn = document.getElementById('modal-action-btn');
+            
+            if (isService) {
+                formArea.innerHTML = `
+                    <div class="form-group" style="text-align:left; margin-bottom:15px;">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px;">爱宠姓名</label>
+                        <input type="text" id="modal-pet-name" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+                    </div>
+                    <div class="form-group" style="text-align:left; margin-bottom:15px;">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px;">寄语/备注</label>
+                        <textarea id="modal-pet-msg" rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;"></textarea>
+                    </div>
+                `;
+                actionBtn.innerText = '立即预约';
+                actionBtn.onclick = handleModalAction; // 预约逻辑
+            } else {
+                formArea.innerHTML = `
+                    <div style="padding:10px; background:#f0f0f0; border-radius:4px; color:#666; font-size:0.9rem;">
+                        <i class="fas fa-truck"></i> 快递发货 · 48小时内发出
+                    </div>
+                `;
+                actionBtn.innerText = '立即购买';
+                actionBtn.onclick = () => {
+                    addToCartFromModal(false); 
+                    checkout(); // 立即购买 = 加购 + 结算
+                };
+            }
+
+            // 生成模拟评价和问答
+            renderMockReviews();
+            renderMockQA();
+
+            // 重置 Tab
+            switchTab('detail');
+            
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').style.display = 'none';
+            document.getElementById('product-modal-overlay').style.display = 'none';
+        }
+
+        function switchTab(tabName) {
+            // Tab 样式
+            document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('.detail-tab');
+            if(tabName === 'detail') tabs[0].classList.add('active');
+            if(tabName === 'reviews') tabs[1].classList.add('active');
+            if(tabName === 'qa') tabs[2].classList.add('active');
+            
+            // 内容显示
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function handleModalAction() {
+            // 预约/购买按钮点击
+            addToCartFromModal(false);
+            checkout();
+        }
+
+        function addToCartFromModal(isCartBtn) {
+            const petNameInput = document.getElementById('modal-pet-name');
+            const petMsgInput = document.getElementById('modal-pet-msg');
+            
+            const petName = petNameInput ? petNameInput.value : null;
+            const msg = petMsgInput ? petMsgInput.value : null;
+            
+            // 如果是服务类，必须填名字
+            const isService = currentModalProduct.category === 'virtual' || currentModalProduct.category === 'service';
+            if (isService && !petName) {
+                return alert('请填写爱宠姓名');
+            }
+
+            addToCart(currentModalProduct, petName, msg);
+            if(isCartBtn) closeProductModal();
+        }
+
+        // 模拟数据生成
+        function renderMockReviews() {
+            const reviews = [
+                { user: '张**', content: '服务非常贴心，工作人员很专业，让宝宝走得很安详。', date: '2023-10-12' },
+                { user: 'L**', content: '纪念币做工很精致，刻字也很清晰，很好的留念。', date: '2023-11-05' },
+                { user: '王**', content: '感谢平台提供的云祈福，让我感觉它还在身边。', date: '2023-12-01' }
+            ];
+            const list = document.getElementById('reviews-list');
+            list.innerHTML = reviews.map(r => `
+                <div class="review-item">
+                    <div class="review-user"><i class="fas fa-user-circle"></i> ${r.user} <span style="margin-left:auto; font-size:0.8rem;">${r.date}</span></div>
+                    <div class="review-text">${r.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderMockQA() {
+            const qas = [
+                { q: '这个服务包含接送吗？', a: '包含的，市区内免费上门接送。' },
+                { q: '大概需要多长时间？', a: '全程大约需要2-3小时，我们会精心安排每一个环节。' }
+            ];
+            const list = document.getElementById('qa-list');
+            list.innerHTML = qas.map(item => `
+                <div class="review-item">
+                    <div style="font-weight:bold; color:#333; margin-bottom:5px;"><span style="color:#e74c3c; margin-right:5px;">Q:</span>${item.q}</div>
+                    <div style="color:#666;"><span style="color:#27ae60; margin-right:5px;">A:</span>${item.a}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- 页面初始化 ---
+        function checkLoginState() {
+            const userArea = document.getElementById('user-area');
+            if (AuthService.isAuthenticated()) {
+                const user = AuthService.getCurrentUser();
+                const displayName = user.username || user.name || '用户';
+                let html = `<span style="font-size:0.9rem; color:#666; margin-right:10px;">你好, ${displayName}</span>`;
+                if (user.role === 'admin') {
+                    html += `<a href="admin.html" style="text-decoration:none; color:var(--primary-color); margin-right:10px;"><i class="fas fa-cog"></i> 后台</a>`;
+                }
+                html += `<a href="#" onclick="AuthService.logout()" style="text-decoration:none; color:#999;"><i class="fas fa-sign-out-alt"></i> 退出</a>`;
+                userArea.innerHTML = html;
+            } else {
+                userArea.innerHTML = `<a href="login.html" style="text-decoration:none; color:#666; font-size:0.9rem;"><i class="fas fa-user-circle"></i> 登录 / 注册</a>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginState();
+            renderProducts();
+            updateCartUI();
+        });
+    </script>
 </body>
 </html>
