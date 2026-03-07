@@ -477,6 +477,11 @@
             </div>
         </div>
         <div class="nav-right">
+            <div style="margin-right: 20px;">
+                <a href="history.html" style="text-decoration:none; color:#666; font-size:0.9rem;">
+                    <i class="fas fa-history"></i> 浏览历史
+                </a>
+            </div>
             <div id="user-area">
                 <!-- 动态显示登录状态 -->
                 <a href="login.html" style="text-decoration:none; color:#666; font-size:0.9rem;">
@@ -656,6 +661,7 @@
                 desc: "定制刻字，永久保存爱宠照片与信息",
                 price: 199,
                 category: "memorial",
+                type: "goods", // 实物商品
                 sales: 230,
                 rating: 4.9,
                 image: "https://images.unsplash.com/photo-1620407632601-38c232c69476?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -666,6 +672,7 @@
                 desc: "高透水晶材质，内置镭射内雕，防潮密封",
                 price: 399,
                 category: "memorial",
+                type: "goods", // 实物商品
                 sales: 85,
                 rating: 4.7,
                 image: "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -676,6 +683,7 @@
                 desc: "点亮一盏长明灯，照亮它回家的路 (7天)",
                 price: 9.9,
                 category: "virtual",
+                type: "service", // 虚拟服务
                 sales: 1540,
                 rating: 5.0,
                 image: "https://images.unsplash.com/photo-1542665093-36614488b394?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -686,6 +694,7 @@
                 desc: "专车接送，独立告别室，全程影像记录",
                 price: 1299,
                 category: "service",
+                type: "service", // 殡葬服务
                 sales: 42,
                 rating: 4.9,
                 image: "https://images.unsplash.com/photo-1596395819057-d375226c7830?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -843,8 +852,13 @@
                 container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">没有找到相关商品/服务</div>';
             } else {
                 products.forEach(p => {
-                    // 判断是否为服务类
-                    const isService = p.type === 'service' || p.category === 'virtual' || p.category === 'service';
+                    // 逻辑升级：完全基于后台配置的 type 判断按钮文案和行为
+                    // 兼容旧数据：如果 type 未定义，默认视为 goods (除非 category 明显是服务)
+                    let isService = p.type === 'service';
+                    if (!p.type) {
+                        isService = p.category === 'virtual' || p.category === 'service';
+                    }
+
                     const btnText = isService ? '立即预约' : '加入购物车';
                     const btnIcon = isService ? 'fa-calendar-check' : 'fa-shopping-cart';
                     
@@ -930,8 +944,13 @@
             document.getElementById('modal-sales').innerText = (product.sales || 0) + '+';
             document.getElementById('modal-full-desc').innerText = product.desc + "\n\n(此处为详细描述占位符，展示商品的详细规格、材质、服务流程等信息。)";
 
-            // 动态表单 (如果是服务/虚拟商品，显示输入框)
-            const isService = product.type === 'service' || product.category === 'virtual' || product.category === 'service';
+            // 动态表单 (完全依赖后台配置的 type)
+            let isService = product.type === 'service';
+            if (!product.type) {
+                // 兼容逻辑
+                isService = product.category === 'virtual' || product.category === 'service';
+            }
+            
             const formArea = document.getElementById('modal-form-area');
             const actionBtn = document.getElementById('modal-action-btn');
             
@@ -970,6 +989,32 @@
             
             modal.style.display = 'block';
             overlay.style.display = 'block';
+
+            // 记录浏览历史
+            addToHistory(product);
+        }
+
+        function addToHistory(product) {
+            let history = JSON.parse(localStorage.getItem('pet_history')) || [];
+            
+            // 去重：如果已存在，先删除
+            history = history.filter(h => h.id !== product.id);
+            
+            // 插入头部
+            history.unshift({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
+                time: Date.now()
+            });
+            
+            // 限制 20 条
+            if (history.length > 20) {
+                history = history.slice(0, 20);
+            }
+            
+            localStorage.setItem('pet_history', JSON.stringify(history));
         }
 
         function closeProductModal() {
@@ -1004,10 +1049,11 @@
             const petName = petNameInput ? petNameInput.value : null;
             const msg = petMsgInput ? petMsgInput.value : null;
             
-            // 修复逻辑：同时检查 type 和 category
-            const isService = currentModalProduct.type === 'service' || 
-                            currentModalProduct.category === 'virtual' || 
-                            currentModalProduct.category === 'service';
+            // 修复逻辑：优先使用 type，兼容旧逻辑
+            let isService = currentModalProduct.type === 'service';
+            if (!currentModalProduct.type) {
+                isService = currentModalProduct.category === 'virtual' || currentModalProduct.category === 'service';
+            }
             
             if (isService && !petName) {
                 alert('请填写爱宠姓名');

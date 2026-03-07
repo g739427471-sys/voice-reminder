@@ -172,7 +172,8 @@
         <ul class="nav-links">
             <li class="active" onclick="showView('products')"><i class="fas fa-box"></i> 商品管理</li>
             <li onclick="showView('orders')"><i class="fas fa-clipboard-list"></i> 订单管理</li>
-            <li onclick="window.location.href='index.html'"><i class="fas fa-sign-out-alt"></i> 返回前台</li>
+            <li onclick="window.location.href='index.html'"><i class="fas fa-store"></li>i> 返回商城首页</li>
+            <li onclick="window.location.href='../index.html'"><i class="fas fa-home"></i> 返回功能主页</li>
         </ul>
     </nav>
 
@@ -466,7 +467,7 @@
                 document.getElementById('p-category').value = product.category;
                 
                 // 回显类型
-                const type = product.type || 'goods';
+                const type = product.type || 'goods'; // 默认为goods
                 document.querySelector(`input[name="p-type"][value="${type}"]`).checked = true;
 
                 // 回显图片
@@ -523,8 +524,12 @@
             let products = getProducts();
             if (id) {
                 const index = products.findIndex(p => p.id == id);
-                products[index] = newProduct;
+                // 合并现有字段 (保留 sales, rating 等)
+                products[index] = { ...products[index], ...newProduct };
             } else {
+                // 新增商品，初始化销量评分
+                newProduct.sales = 0;
+                newProduct.rating = 5.0;
                 products.push(newProduct);
             }
             
