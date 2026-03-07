@@ -58,6 +58,22 @@
             padding: 20px;
         }
 
+        .back-link {
+            color: var(--sidebar-text);
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
         .logo {
             font-size: 1.5rem;
             margin-bottom: 30px;
@@ -412,6 +428,9 @@
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> 返回主页
+            </a>
             <div class="logo">
                 <i class="fas fa-bullhorn"></i> 语音提醒器
             </div>
