@@ -366,9 +366,12 @@
             </div>
         </div>
         <div class="nav-right">
-            <a href="admin.html" style="text-decoration: none; color: #666; font-size: 0.9rem;">
-                <i class="fas fa-user-cog"></i> 管理后台
-            </a>
+            <div id="user-area">
+                <!-- 动态显示登录状态 -->
+                <a href="login.html" style="text-decoration:none; color:#666; font-size:0.9rem;">
+                    <i class="fas fa-user-circle"></i> 登录 / 注册
+                </a>
+            </div>
             <div class="cart-btn" onclick="toggleCart()">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count" id="cart-count">0</span>
@@ -438,6 +441,7 @@
         </div>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
         // --- 模拟数据库 (LocalStorage) ---
         // 初始化默认数据
@@ -559,9 +563,16 @@
         function checkout() {
             if (cart.length === 0) return alert('购物车是空的');
             
+            // 强制登录验证
+            if (!AuthService.requireLogin()) return;
+
             const orders = JSON.parse(localStorage.getItem('pet_orders')) || [];
+            const user = AuthService.getCurrentUser();
+            
             const newOrder = {
                 id: 'ORD-' + Date.now(),
+                userId: user.id,
+                userName: user.name,
                 items: cart,
                 total: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
                 date: new Date().toLocaleString(),
@@ -574,11 +585,26 @@
             cart = [];
             updateCartUI();
             toggleCart();
-            alert('订单提交成功！请联系客服付款 (模拟)');
+            alert('订单提交成功！请等待工作人员联系。');
         }
 
         // --- 页面渲染 ---
         let currentModalProduct = null;
+
+        function checkLoginState() {
+            const userArea = document.getElementById('user-area');
+            if (AuthService.isAuthenticated()) {
+                const user = AuthService.getCurrentUser();
+                let html = `<span style="font-size:0.9rem; color:#666; margin-right:10px;">你好, ${user.name}</span>`;
+                
+                if (user.role === 'admin') {
+                    html += `<a href="admin.html" style="text-decoration:none; color:var(--primary-color); margin-right:10px;"><i class="fas fa-cog"></i> 后台</a>`;
+                }
+                
+                html += `<a href="#" onclick="AuthService.logout()" style="text-decoration:none; color:#999;"><i class="fas fa-sign-out-alt"></i></a>`;
+                userArea.innerHTML = html;
+            }
+        }
 
         function renderProducts(category = 'all') {
             const products = getProducts();
@@ -657,6 +683,7 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
+            checkLoginState();
             renderProducts();
             updateCartUI();
         });
