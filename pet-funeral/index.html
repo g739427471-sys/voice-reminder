@@ -626,14 +626,23 @@
             const userArea = document.getElementById('user-area');
             if (AuthService.isAuthenticated()) {
                 const user = AuthService.getCurrentUser();
-                let html = `<span style="font-size:0.9rem; color:#666; margin-right:10px;">你好, ${user.name}</span>`;
+                // 修复：读取真实用户名 (user.username 或 user.name)
+                const displayName = user.username || user.name || '用户';
+                
+                let html = `<span style="font-size:0.9rem; color:#666; margin-right:10px;">你好, ${displayName}</span>`;
                 
                 if (user.role === 'admin') {
                     html += `<a href="admin.html" style="text-decoration:none; color:var(--primary-color); margin-right:10px;"><i class="fas fa-cog"></i> 后台</a>`;
                 }
                 
-                html += `<a href="#" onclick="AuthService.logout()" style="text-decoration:none; color:#999;"><i class="fas fa-sign-out-alt"></i></a>`;
+                html += `<a href="#" onclick="AuthService.logout()" style="text-decoration:none; color:#999;"><i class="fas fa-sign-out-alt"></i> 退出</a>`;
                 userArea.innerHTML = html;
+            } else {
+                userArea.innerHTML = `
+                    <a href="login.html" style="text-decoration:none; color:#666; font-size:0.9rem;">
+                        <i class="fas fa-user-circle"></i> 登录 / 注册
+                    </a>
+                `;
             }
         }
 
@@ -645,6 +654,12 @@
             const filtered = category === 'all' ? products : products.filter(p => p.category === category);
 
             filtered.forEach(p => {
+                // 逻辑升级：根据 type 判断按钮文案和行为
+                const isService = p.type === 'service' || p.category === 'virtual' || p.category === 'service';
+                const btnText = isService ? '立即预约' : '加入购物车';
+                const btnIcon = isService ? 'fa-calendar-check' : 'fa-shopping-cart';
+                const btnClass = isService ? 'btn-service' : 'btn-goods'; // 可扩展样式
+
                 const div = document.createElement('div');
                 div.className = 'product-card';
                 div.innerHTML = `
@@ -654,7 +669,7 @@
                         <div class="product-desc">${p.desc}</div>
                         <div class="product-price">¥${p.price}</div>
                         <button class="add-btn" onclick="handleBuyClick(${p.id})">
-                            ${p.category === 'virtual' || p.category === 'service' ? '预订服务' : '加入购物车'}
+                            <i class="fas ${btnIcon}"></i> ${btnText}
                         </button>
                     </div>
                 `;

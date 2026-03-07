@@ -250,12 +250,28 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>商品类型 (必选)</label>
+                    <div style="display:flex; gap:20px; margin-top:5px;">
+                        <label style="font-weight:normal; cursor:pointer;">
+                            <input type="radio" name="p-type" value="goods" checked> 实物商品 (加入购物车)
+                        </label>
+                        <label style="font-weight:normal; cursor:pointer;">
+                            <input type="radio" name="p-type" value="service"> 服务 (立即预约)
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>价格</label>
                     <input type="number" id="p-price" class="form-control" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>图片URL</label>
-                    <input type="text" id="p-image" class="form-control" placeholder="https://...">
+                    <label>商品图片</label>
+                    <input type="file" id="p-image-file" class="form-control" accept="image/*" onchange="handleImageUpload(this)">
+                    <input type="hidden" id="p-image-base64">
+                    <div id="image-preview" style="margin-top:10px; width:100px; height:100px; background:#eee; border-radius:4px; display:flex; justify-content:center; align-items:center; overflow:hidden;">
+                        <span style="color:#999; font-size:12px;">暂无图片</span>
+                    </div>
+                    <p style="font-size:12px; color:#999; margin-top:5px;">支持 jpg/png，自动压缩预览</p>
                 </div>
                 <div style="text-align: right; margin-top: 20px;">
                     <button type="button" class="action-btn" onclick="closeModal()">取消</button>
@@ -416,6 +432,27 @@
             });
         }
 
+        // --- 图片处理逻辑 ---
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // 限制大小 5MB
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过 5MB');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('p-image-base64').value = base64;
+                document.getElementById('image-preview').innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
         // --- 商品操作 ---
         function openProductModal(product = null) {
             const modal = document.getElementById('product-modal');
@@ -427,10 +464,25 @@
                 document.getElementById('p-desc').value = product.desc;
                 document.getElementById('p-price').value = product.price;
                 document.getElementById('p-category').value = product.category;
-                document.getElementById('p-image').value = product.image;
+                
+                // 回显类型
+                const type = product.type || 'goods';
+                document.querySelector(`input[name="p-type"][value="${type}"]`).checked = true;
+
+                // 回显图片
+                const img = product.image || '';
+                document.getElementById('p-image-base64').value = img;
+                if(img) {
+                    document.getElementById('image-preview').innerHTML = `<img src="${img}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    document.getElementById('image-preview').innerHTML = '<span style="color:#999; font-size:12px;">暂无图片</span>';
+                }
             } else {
                 form.reset();
                 document.getElementById('p-id').value = '';
+                document.getElementById('p-image-base64').value = '';
+                document.getElementById('image-preview').innerHTML = '<span style="color:#999; font-size:12px;">暂无图片</span>';
+                document.querySelector('input[name="p-type"][value="goods"]').checked = true;
             }
             
             modal.style.display = 'flex';
@@ -455,13 +507,17 @@
         document.getElementById('product-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const id = document.getElementById('p-id').value;
+            const type = document.querySelector('input[name="p-type"]:checked').value;
+            const image = document.getElementById('p-image-base64').value || 'https://via.placeholder.com/150';
+
             const newProduct = {
                 id: id ? parseInt(id) : Date.now(),
                 name: document.getElementById('p-name').value,
                 desc: document.getElementById('p-desc').value,
                 price: parseFloat(document.getElementById('p-price').value),
                 category: document.getElementById('p-category').value,
-                image: document.getElementById('p-image').value || 'https://via.placeholder.com/150'
+                type: type, // 新增类型字段
+                image: image // 存 Base64
             };
 
             let products = getProducts();
