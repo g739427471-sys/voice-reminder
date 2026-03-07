@@ -210,7 +210,7 @@
         </div>
     </div>
 
-    <!-- 1. 内嵌核心权限逻辑 (确保加载) -->
+    <!-- 1. 权限管理模块 -->
     <script>
         const AuthService = {
             users: [
@@ -250,22 +250,14 @@
                 return new Promise((resolve, reject) => {
                     setTimeout(() => {
                         let user = null;
-
-                        // 1. 账号密码登录
                         if (params.type === 'password') {
                             user = this.users.find(u => 
                                 (u.username === params.account || u.email === params.account) && 
                                 u.password === params.password
                             );
-                        } 
-                        // 2. 手机验证码登录
-                        else if (params.type === 'mobile') {
-                            if (params.code === '123456') {
-                                user = this.users[1]; // 默认普通用户
-                            }
-                        }
-                        // 3. 微信扫码
-                        else if (params.type === 'wechat') {
+                        } else if (params.type === 'mobile') {
+                            if (params.code === '123456') user = this.users[1];
+                        } else if (params.type === 'wechat') {
                             user = this.users[1];
                         }
 
@@ -275,32 +267,26 @@
                         } else {
                             reject({ success: false, message: '账号或密码错误' });
                         }
-                    }, 500); // 缩短延迟到 0.5s
+                    }, 500);
                 });
-            },
-
-            logout() {
-                localStorage.removeItem('pet_auth_token');
-                localStorage.removeItem('pet_current_user');
-                window.location.reload();
             },
 
             _createSession(user) {
                 const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-                const payload = btoa(encodeURIComponent(JSON.stringify({
-    sub: user.id,
-    role: user.role,
-    name: user.name,
-    iat: Date.now(),
-    exp: Date.now() + 1000 * 60 * 60 * 24 * 7
-})));
+                // 修复：移除可能包含中文的 name 字段，防止 btoa 报错
+                // 完整的用户信息已经保存在 pet_current_user 里了，Token 里只存核心 ID 即可
+                const payload = btoa(JSON.stringify({
+                    sub: user.id,
+                    role: user.role,
+                    iat: Date.now(),
+                    exp: Date.now() + 1000 * 60 * 60 * 24 * 7
+                }));
                 const token = `${header}.${payload}.mock_signature`;
                 
                 localStorage.setItem('pet_auth_token', token);
                 localStorage.setItem('pet_current_user', JSON.stringify(user));
             }
         };
-        window.AuthService = AuthService;
     </script>
 
     <!-- 2. 页面交互逻辑 -->
@@ -313,15 +299,12 @@
             document.getElementById(type + '-form').classList.remove('hidden');
         }
 
-        // 模拟发送验证码
         function sendCaptcha(btn) {
             btn.disabled = true;
             let count = 60;
             btn.innerText = `${count}s后重试`;
-            
             alert('【模拟短信】您的验证码是：123456');
             document.getElementById('mobile-code').value = '123456';
-
             const timer = setInterval(() => {
                 count--;
                 btn.innerText = `${count}s后重试`;
@@ -333,24 +316,16 @@
             }, 1000);
         }
 
-        // 处理登录
         async function handleLogin(type, data) {
-            // 获取当前表单的提交按钮
-            let btn;
-            if (type === 'mobile') btn = document.querySelector('#mobile-form button[type="submit"]');
-            if (type === 'password') btn = document.querySelector('#password-form button[type="submit"]');
-            if (type === 'wechat') btn = document.querySelector('#wechat-form button');
-
+            const btn = document.querySelector('.login-form:not(.hidden) button');
             if(btn) {
                 btn.disabled = true;
-                const originalText = btn.innerText;
                 btn.innerText = '登录中...';
             }
 
             try {
                 const res = await AuthService.login({ type, ...data });
                 if (res.success) {
-                    // 登录成功
                     const redirect = sessionStorage.getItem('auth_redirect') || 'index.html';
                     sessionStorage.removeItem('auth_redirect');
                     window.location.href = redirect;
@@ -359,7 +334,7 @@
                 alert(err.message);
                 if(btn) {
                     btn.disabled = false;
-                    btn.innerText = '重试'; // 恢复按钮
+                    btn.innerText = '重试';
                 }
             }
         }
@@ -383,4 +358,3 @@
     </script>
 </body>
 </html>
-
