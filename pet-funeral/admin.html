@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物殡葬 - 管理后台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #ecf0f1;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+
+        .nav-links li:hover, .nav-links li.active {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        /* 主内容 */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #666;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .btn-edit { background-color: var(--accent-color); color: white; }
+        .btn-delete { background-color: var(--danger-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        .status-pending { background-color: var(--warning-color); }
+        .status-completed { background-color: var(--success-color); }
+        .status-cancelled { background-color: #95a5a6; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="brand">
+            <i class="fas fa-cog"></i> 管理后台
+        </div>
+        <ul class="nav-links">
+            <li class="active" onclick="showView('products')"><i class="fas fa-box"></i> 商品管理</li>
+            <li onclick="showView('orders')"><i class="fas fa-clipboard-list"></i> 订单管理</li>
+            <li onclick="window.location.href='index.html'"><i class="fas fa-sign-out-alt"></i> 返回前台</li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="header">
+            <h2 id="page-title">商品管理</h2>
+            <button class="btn-success action-btn" onclick="openProductModal()" id="add-btn" style="font-size: 1rem; padding: 8px 15px;">
+                <i class="fas fa-plus"></i> 新增商品
+            </button>
+        </div>
+
+        <!-- 商品列表视图 -->
+        <div id="products-view" class="view">
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>图片</th>
+                            <th>名称</th>
+                            <th>分类</th>
+                            <th>价格</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-table-body">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 订单列表视图 -->
+        <div id="orders-view" class="view" style="display:none;">
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>时间</th>
+                            <th>总价</th>
+                            <th>包含服务/商品</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-table-body">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- 商品编辑模态框 -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">编辑商品</h3>
+            <form id="product-form">
+                <input type="hidden" id="p-id">
+                <div class="form-group">
+                    <label>名称</label>
+                    <input type="text" id="p-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="p-desc" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <select id="p-category" class="form-control">
+                        <option value="memorial">纪念用品</option>
+                        <option value="virtual">云祈福</option>
+                        <option value="service">殡葬服务</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>价格</label>
+                    <input type="number" id="p-price" class="form-control" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>图片URL</label>
+                    <input type="text" id="p-image" class="form-control" placeholder="https://...">
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="action-btn" onclick="closeModal()">取消</button>
+                    <button type="submit" class="action-btn btn-success">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- 数据逻辑 ---
+        const defaultProducts = [
+            { id: 1, name: "纯铜纪念币", desc: "定制刻字", price: 199, category: "memorial", image: "https://via.placeholder.com/100" },
+            { id: 3, name: "云端祈福灯", desc: "点亮7天", price: 9.9, category: "virtual", image: "https://via.placeholder.com/100" }
+        ];
+
+        function getProducts() {
+            const stored = localStorage.getItem('pet_products');
+            return stored ? JSON.parse(stored) : defaultProducts;
+        }
+
+        function saveProducts(products) {
+            localStorage.setItem('pet_products', JSON.stringify(products));
+            renderProducts();
+        }
+
+        function getOrders() {
+            const stored = localStorage.getItem('pet_orders');
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveOrders(orders) {
+            localStorage.setItem('pet_orders', JSON.stringify(orders));
+            renderOrders();
+        }
+
+        // --- 视图切换 ---
+        function showView(viewName) {
+            document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(viewName + '-view').style.display = 'block';
+            document.getElementById('page-title').innerText = viewName === 'products' ? '商品管理' : '订单管理';
+            document.getElementById('add-btn').style.display = viewName === 'products' ? 'inline-block' : 'none';
+            
+            // Highlight nav item
+            const index = viewName === 'products' ? 0 : 1;
+            document.querySelectorAll('.nav-links li')[index].classList.add('active');
+
+            if (viewName === 'products') renderProducts();
+            else renderOrders();
+        }
+
+        // --- 商品渲染 ---
+        function renderProducts() {
+            const products = getProducts();
+            const tbody = document.getElementById('product-table-body');
+            tbody.innerHTML = '';
+
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.id}</td>
+                    <td><img src="${p.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
+                    <td>${p.name}</td>
+                    <td>${
+                        p.category === 'memorial' ? '纪念用品' : 
+                        p.category === 'virtual' ? '云祈福' : '殡葬服务'
+                    }</td>
+                    <td>¥${p.price}</td>
+                    <td>
+                        <button class="action-btn btn-edit" onclick="editProduct(${p.id})">编辑</button>
+                        <button class="action-btn btn-delete" onclick="deleteProduct(${p.id})">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 订单渲染 ---
+        function renderOrders() {
+            const orders = getOrders();
+            const tbody = document.getElementById('order-table-body');
+            tbody.innerHTML = '';
+
+            orders.forEach(o => {
+                const tr = document.createElement('tr');
+                const itemsSummary = o.items.map(i => i.name).join(', ');
+                const statusClass = o.status === '待处理' ? 'status-pending' : 'status-completed';
+                
+                tr.innerHTML = `
+                    <td>${o.id}</td>
+                    <td>${o.date}</td>
+                    <td>¥${o.total.toFixed(2)}</td>
+                    <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${itemsSummary}">${itemsSummary}</td>
+                    <td><span class="status-badge ${statusClass}">${o.status}</span></td>
+                    <td>
+                        ${o.status === '待处理' ? `<button class="action-btn btn-success" onclick="completeOrder('${o.id}')">完成</button>` : ''}
+                        <button class="action-btn btn-delete" onclick="deleteOrder('${o.id}')">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 商品操作 ---
+        function openProductModal(product = null) {
+            const modal = document.getElementById('product-modal');
+            const form = document.getElementById('product-form');
+            
+            if (product) {
+                document.getElementById('p-id').value = product.id;
+                document.getElementById('p-name').value = product.name;
+                document.getElementById('p-desc').value = product.desc;
+                document.getElementById('p-price').value = product.price;
+                document.getElementById('p-category').value = product.category;
+                document.getElementById('p-image').value = product.image;
+            } else {
+                form.reset();
+                document.getElementById('p-id').value = '';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').style.display = 'none';
+        }
+
+        function deleteProduct(id) {
+            if (confirm('确定删除吗？')) {
+                const products = getProducts().filter(p => p.id !== id);
+                saveProducts(products);
+            }
+        }
+
+        function editProduct(id) {
+            const product = getProducts().find(p => p.id === id);
+            openProductModal(product);
+        }
+
+        document.getElementById('product-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('p-id').value;
+            const newProduct = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('p-name').value,
+                desc: document.getElementById('p-desc').value,
+                price: parseFloat(document.getElementById('p-price').value),
+                category: document.getElementById('p-category').value,
+                image: document.getElementById('p-image').value || 'https://via.placeholder.com/150'
+            };
+
+            let products = getProducts();
+            if (id) {
+                const index = products.findIndex(p => p.id == id);
+                products[index] = newProduct;
+            } else {
+                products.push(newProduct);
+            }
+            
+            saveProducts(products);
+            closeModal();
+        });
+
+        // --- 订单操作 ---
+        function completeOrder(id) {
+            let orders = getOrders();
+            const order = orders.find(o => o.id === id);
+            if (order) {
+                order.status = '已完成';
+                saveOrders(orders);
+            }
+        }
+
+        function deleteOrder(id) {
+            if (confirm('确定删除订单吗？')) {
+                let orders = getOrders().filter(o => o.id !== id);
+                saveOrders(orders);
+            }
+        }
+
+        // 初始化
+        renderProducts();
+    </script>
+</body>
+</html>
