@@ -1000,7 +1000,7 @@
             // 去重：如果已存在，先删除
             history = history.filter(h => h.id !== product.id);
             
-            // 插入头部
+            // 插入头部 (仅保留必要信息以节省空间)
             history.unshift({
                 id: product.id,
                 name: product.name,
@@ -1014,7 +1014,16 @@
                 history = history.slice(0, 20);
             }
             
-            localStorage.setItem('pet_history', JSON.stringify(history));
+            try {
+                localStorage.setItem('pet_history', JSON.stringify(history));
+            } catch (e) {
+                console.error("History Storage failed:", e);
+                // 如果存不下，尝试删除最后一条再存，或者清空旧数据
+                if(history.length > 1) {
+                    history.pop();
+                    try { localStorage.setItem('pet_history', JSON.stringify(history)); } catch(ex){}
+                }
+            }
         }
 
         function closeProductModal() {

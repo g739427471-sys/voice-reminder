@@ -174,10 +174,17 @@
 
     <script>
         function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('pet_history')) || [];
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem('pet_history')) || [];
+            } catch (e) {
+                console.error("Failed to parse history:", e);
+                localStorage.removeItem('pet_history');
+            }
+
             const container = document.getElementById('history-list');
             
-            if (history.length === 0) {
+            if (!Array.isArray(history) || history.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 15px;"></i>
@@ -187,19 +194,26 @@
                 return;
             }
 
-            container.innerHTML = history.map(item => `
+            container.innerHTML = history.map(item => {
+                // 简单的防错检查
+                const name = item.name || '未知商品';
+                const price = item.price || 0;
+                const img = item.image || 'https://via.placeholder.com/80';
+                const timeStr = item.time ? new Date(item.time).toLocaleString() : '未知时间';
+                
+                return `
                 <div class="history-item">
-                    <img src="${item.image}" class="item-img" alt="${item.name}">
+                    <img src="${img}" class="item-img" alt="${name}" onerror="this.src='https://via.placeholder.com/80'">
                     <div class="item-info">
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-price">¥${item.price}</div>
-                        <div class="item-time">浏览时间: ${new Date(item.time).toLocaleString()}</div>
+                        <div class="item-name">${name}</div>
+                        <div class="item-price">¥${price}</div>
+                        <div class="item-time">浏览时间: ${timeStr}</div>
                     </div>
                     <div style="display:flex; align-items:center;">
                         <a href="index.html" style="padding:5px 10px; border:1px solid var(--primary-color); color:var(--primary-color); border-radius:4px; text-decoration:none; font-size:0.9rem;">查看详情</a>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function clearHistory() {
