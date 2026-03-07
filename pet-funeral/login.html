@@ -287,13 +287,13 @@
 
             _createSession(user) {
                 const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-                const payload = btoa(JSON.stringify({
-                    sub: user.id,
-                    role: user.role,
-                    name: user.name,
-                    iat: Date.now(),
-                    exp: Date.now() + 1000 * 60 * 60 * 24 * 7
-                }));
+                const payload = btoa(encodeURIComponent(JSON.stringify({
+    sub: user.id,
+    role: user.role,
+    name: user.name,
+    iat: Date.now(),
+    exp: Date.now() + 1000 * 60 * 60 * 24 * 7
+})));
                 const token = `${header}.${payload}.mock_signature`;
                 
                 localStorage.setItem('pet_auth_token', token);
@@ -383,3 +383,4 @@
     </script>
 </body>
 </html>
+
