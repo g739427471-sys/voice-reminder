@@ -619,6 +619,80 @@
         </div>
     </div>
 
+    <!-- 地址管理与下单弹窗 -->
+    <div class="overlay" id="checkout-overlay" onclick="closeCheckoutModal()"></div>
+    <div class="service-modal" id="checkout-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:200; background:white; border-radius:8px; width:800px; max-width:95%; max-height:90vh; overflow-y:auto; padding:0;">
+        <div class="modal-header">
+            <h3>确认订单</h3>
+            <span onclick="closeCheckoutModal()" style="cursor:pointer; font-size:1.5rem">&times;</span>
+        </div>
+        <div class="modal-body" style="display:block; padding:20px;">
+            <!-- 1. 收货地址 -->
+            <div style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="border-left:4px solid var(--primary-color); padding-left:10px;">收货地址</h4>
+                    <button class="add-btn" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="openAddressForm()">+ 新增地址</button>
+                </div>
+                <div id="address-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px;">
+                    <!-- 动态生成地址卡片 -->
+                </div>
+                <!-- 新增地址表单 (默认隐藏) -->
+                <div id="address-form" style="display:none; background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <input type="text" id="addr-name" placeholder="收货人姓名" class="search-input" style="width:100%">
+                        <input type="text" id="addr-phone" placeholder="手机号码" class="search-input" style="width:100%">
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <input type="text" id="addr-region" placeholder="省/市/区" class="search-input" style="width:100%">
+                        <input type="text" id="addr-detail" placeholder="详细地址 (街道/门牌)" class="search-input" style="width:100%; grid-column:span 2;">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <span style="margin-right:10px;">标签:</span>
+                        <label><input type="radio" name="addr-tag" value="家" checked> 家</label>
+                        <label style="margin-left:10px;"><input type="radio" name="addr-tag" value="公司"> 公司</label>
+                        <label style="margin-left:10px;"><input type="radio" name="addr-tag" value="学校"> 学校</label>
+                    </div>
+                    <div style="text-align:right;">
+                        <button class="sort-btn" onclick="document.getElementById('address-form').style.display='none'">取消</button>
+                        <button class="add-btn" style="width:auto; display:inline-block;" onclick="saveAddress()">保存地址</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 商品清单 -->
+            <div style="margin-bottom:20px;">
+                <h4 style="border-left:4px solid var(--primary-color); padding-left:10px; margin-bottom:10px;">商品清单</h4>
+                <div id="checkout-items" style="background:#f9f9f9; padding:10px; border-radius:8px;">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 3. 支付方式 -->
+            <div style="margin-bottom:20px;">
+                <h4 style="border-left:4px solid var(--primary-color); padding-left:10px; margin-bottom:10px;">支付方式</h4>
+                <div style="display:flex; gap:20px;">
+                    <label style="display:flex; align-items:center; cursor:pointer; padding:10px; border:1px solid #ddd; border-radius:4px; width:150px;">
+                        <input type="radio" name="pay-method" value="wechat" checked> 
+                        <i class="fab fa-weixin" style="color:#09bb07; font-size:1.5rem; margin:0 10px;"></i> 微信支付
+                    </label>
+                    <label style="display:flex; align-items:center; cursor:pointer; padding:10px; border:1px solid #ddd; border-radius:4px; width:150px;">
+                        <input type="radio" name="pay-method" value="alipay"> 
+                        <i class="fab fa-alipay" style="color:#1678ff; font-size:1.5rem; margin:0 10px;"></i> 支付宝
+                    </label>
+                </div>
+            </div>
+
+            <!-- 底部结算栏 -->
+            <div style="text-align:right; border-top:1px solid #eee; padding-top:20px;">
+                <div style="margin-bottom:10px; font-size:1.1rem;">
+                    共 <span id="checkout-count" style="color:#e74c3c; font-weight:bold;">0</span> 件，
+                    实付金额: <span id="checkout-total" style="color:#e74c3c; font-size:1.5rem; font-weight:bold;">¥0.00</span>
+                </div>
+                <button class="add-btn" style="width:200px; font-size:1.1rem;" onclick="submitOrder()">提交订单</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
     <script>
         const AuthService = {
@@ -795,11 +869,152 @@
             document.getElementById('cart-overlay').classList.toggle('active');
         }
 
+        // --- 地址管理逻辑 ---
+        function getAddresses() {
+            return JSON.parse(localStorage.getItem('pet_addresses')) || [];
+        }
+
+        function saveAddress() {
+            const name = document.getElementById('addr-name').value;
+            const phone = document.getElementById('addr-phone').value;
+            const region = document.getElementById('addr-region').value;
+            const detail = document.getElementById('addr-detail').value;
+            const tag = document.querySelector('input[name="addr-tag"]:checked').value;
+
+            if (!name || !phone || !region || !detail) {
+                return alert('请填写完整地址信息');
+            }
+
+            const addresses = getAddresses();
+            addresses.push({
+                id: Date.now(),
+                name, phone, region, detail, tag,
+                isDefault: addresses.length === 0
+            });
+            localStorage.setItem('pet_addresses', JSON.stringify(addresses));
+            
+            renderAddressList();
+            document.getElementById('address-form').style.display = 'none';
+            // 清空表单
+            document.getElementById('addr-name').value = '';
+            document.getElementById('addr-phone').value = '';
+            document.getElementById('addr-region').value = '';
+            document.getElementById('addr-detail').value = '';
+        }
+
+        let selectedAddressId = null;
+
+        function renderAddressList() {
+            const addresses = getAddresses();
+            const container = document.getElementById('address-list');
+            container.innerHTML = '';
+
+            if (addresses.length === 0) {
+                container.innerHTML = '<div style="color:#999; padding:10px;">暂无收货地址，请新增</div>';
+                return;
+            }
+
+            // 默认选中第一个
+            if (!selectedAddressId && addresses.length > 0) {
+                selectedAddressId = addresses[0].id;
+            }
+
+            addresses.forEach(addr => {
+                const isSelected = addr.id === selectedAddressId;
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    border: 2px solid ${isSelected ? 'var(--primary-color)' : '#eee'};
+                    padding: 15px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    position: relative;
+                    background: ${isSelected ? '#fcf0ff' : 'white'};
+                `;
+                div.onclick = () => {
+                    selectedAddressId = addr.id;
+                    renderAddressList();
+                };
+                div.innerHTML = `
+                    <div style="font-weight:bold; margin-bottom:5px;">
+                        ${addr.name} <span style="font-weight:normal; color:#666; font-size:0.9rem;">${addr.phone}</span>
+                        ${addr.tag ? `<span style="background:#eee; font-size:0.8rem; padding:2px 6px; border-radius:4px; margin-left:5px;">${addr.tag}</span>` : ''}
+                    </div>
+                    <div style="color:#666; font-size:0.9rem; line-height:1.4;">
+                        ${addr.region} ${addr.detail}
+                    </div>
+                    <div style="position:absolute; top:10px; right:10px; color:#e74c3c; font-size:0.9rem; cursor:pointer;" onclick="deleteAddress(${addr.id}, event)">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteAddress(id, event) {
+            event.stopPropagation();
+            if (confirm('确定删除此地址吗？')) {
+                let addresses = getAddresses().filter(a => a.id !== id);
+                localStorage.setItem('pet_addresses', JSON.stringify(addresses));
+                if (selectedAddressId === id) selectedAddressId = null;
+                renderAddressList();
+            }
+        }
+
+        function openAddressForm() {
+            document.getElementById('address-form').style.display = 'block';
+        }
+
+        // --- 升级版结算逻辑 ---
         function checkout() {
             if (cart.length === 0) return alert('购物车是空的');
             if (!AuthService.requireLogin()) return;
 
-            const orders = JSON.parse(localStorage.getItem('pet_orders')) || [];
+            // 打开结算弹窗
+            document.getElementById('checkout-modal').style.display = 'block';
+            document.getElementById('checkout-overlay').style.display = 'block';
+            
+            // 渲染地址
+            renderAddressList();
+            
+            // 渲染商品清单
+            const itemsContainer = document.getElementById('checkout-items');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+            let count = 0;
+            
+            cart.forEach(item => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+                count += item.qty;
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;';
+                div.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${item.name}</div>
+                        <div style="font-size:0.8rem; color:#999;">${item.petName ? `备注: ${item.petName}` : ''}</div>
+                    </div>
+                    <div style="width:100px; text-align:right;">
+                        <div style="color:#e74c3c;">¥${item.price}</div>
+                        <div style="color:#999;">x ${item.qty}</div>
+                    </div>
+                `;
+                itemsContainer.appendChild(div);
+            });
+            
+            document.getElementById('checkout-count').innerText = count;
+            document.getElementById('checkout-total').innerText = '¥' + total.toFixed(2);
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkout-modal').style.display = 'none';
+            document.getElementById('checkout-overlay').style.display = 'none';
+        }
+
+        function submitOrder() {
+            if (!selectedAddressId) return alert('请选择收货地址');
+            
+            const addresses = getAddresses();
+            const address = addresses.find(a => a.id === selectedAddressId);
             const user = AuthService.getCurrentUser();
             
             const newOrder = {
@@ -808,17 +1023,23 @@
                 userName: user.name,
                 items: cart,
                 total: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+                address: address, // 保存地址快照
+                payMethod: document.querySelector('input[name="pay-method"]:checked').value,
                 date: new Date().toLocaleString(),
-                status: '待处理'
+                status: '已付款' // 模拟直接付款成功
             };
             
+            const orders = JSON.parse(localStorage.getItem('pet_orders')) || [];
             orders.push(newOrder);
             localStorage.setItem('pet_orders', JSON.stringify(orders));
             
             cart = [];
             updateCartUI();
-            toggleCart();
-            alert('订单提交成功！请等待工作人员联系。');
+            closeCheckoutModal();
+            toggleCart(); // 关闭侧边栏
+            
+            // 模拟支付成功页
+            alert(`支付成功！\n订单号: ${newOrder.id}\n支付金额: ¥${newOrder.total}\n我们将尽快发货至: ${address.region} ${address.detail}`);
         }
 
         // --- 核心展示逻辑 (搜索/排序/筛选) ---
