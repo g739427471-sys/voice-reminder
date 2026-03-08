@@ -1,95 +1,70 @@
+
 /**
- * 权限管理模拟模块 (Mock Auth Service)
- * 用于在静态页面中模拟后端登录、JWT验证和权限控制
+ * 权限管理模块 (Supabase Auth Service)
  */
 
 const AuthService = {
-    // 模拟数据库用户
-    users: [
-        {
-            id: 'admin_001',
-            username: 'xzcdd',
-            password: '521125xnx', // 实际后端应存 Hash
-            role: 'admin',
-            name: '超级管理员',
-            avatar: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'
-        },
-        {
-            id: 'user_001',
-            username: 'user',
-            password: '123',
-            role: 'user',
-            name: '普通用户',
-            avatar: 'https://ui-avatars.com/api/?name=User&background=random'
-        }
-    ],
-
-    // 检查是否登录
+    // 检查是否登录 (同步检查，仅基于当前内存状态或 localStorage)
+    // 注意：Supabase 的 auth 是异步的，这里只能做初步判断
     isAuthenticated() {
-        const token = localStorage.getItem('pet_auth_token');
-        if (!token) return false;
-        
-        // 模拟 JWT 过期校验 (这里简单判断 token 是否存在)
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.exp > Date.now();
-        } catch (e) {
-            return false;
-        }
+        const session = localStorage.getItem('sb-urcofukhutikgjkvmjjo-auth-token'); // Supabase 默认存储 key
+        return !!session;
     },
 
-    // 获取当前用户信息
-    getCurrentUser() {
-        const userStr = localStorage.getItem('pet_current_user');
-        return userStr ? JSON.parse(userStr) : null;
+    // 获取当前用户信息 (异步)
+    async getCurrentUser() {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        return user;
+    },
+    
+    // 获取当前用户会话 (异步)
+    async getSession() {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        return session;
     },
 
-    // 模拟登录 (支持 账号密码 / 手机验证码 / 微信扫码)
-    async login(params) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                let user = null;
-
-                // 1. 账号密码登录
-                if (params.type === 'password') {
-                    user = this.users.find(u => 
-                        (u.username === params.account || u.email === params.account) && 
-                        u.password === params.password
-                    );
-                } 
-                // 2. 手机验证码登录 (模拟)
-                else if (params.type === 'mobile') {
-                    // 只要验证码是 123456 就算过
-                    if (params.code === '123456') {
-                        user = this.users[1]; // 默认登入普通用户
-                    }
-                }
-                // 3. 微信扫码 (模拟)
-                else if (params.type === 'wechat') {
-                    user = this.users[1];
-                }
-
-                if (user) {
-                    this._createSession(user);
-                    resolve({ success: true, user });
-                } else {
-                    reject({ success: false, message: '账号或密码错误' });
-                }
-            }, 800); // 模拟网络延迟
+    // 登录
+    async login(email, password) {
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+            email,
+            password
         });
+        
+        if (error) {
+            return { success: false, message: error.message };
+        }
+        
+        return { success: true, user: data.user };
+    },
+
+    // 注册
+    async register(email, password, metadata = {}) {
+        const { data, error } = await window.supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+                data: metadata
+            }
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
+        }
+
+        return { success: true, user: data.user };
     },
 
     // 退出登录
-    logout() {
-        localStorage.removeItem('pet_auth_token');
-        localStorage.removeItem('pet_current_user');
+    async logout() {
+        const { error } = await window.supabaseClient.auth.signOut();
+        if (error) console.error('Logout error:', error);
         window.location.reload();
     },
 
-    // 强制登录拦截 (中间件)
-    requireLogin(redirectUrl = 'login.html') {
-        if (!this.isAuthenticated()) {
-            // 记录来源页，登录后跳回
+    // 强制登录拦截 (异步)
+    async requireLogin(redirectUrl = 'login.html') {
+        const session = await this.getSession();
+        if (!session) {
             sessionStorage.setItem('auth_redirect', window.location.href);
             window.location.href = redirectUrl;
             return false;
@@ -97,12 +72,22 @@ const AuthService = {
         return true;
     },
 
-    // 强制管理员权限拦截
-    requireAdmin() {
-        if (!this.requireLogin('login.html')) return false;
-        
-        const user = this.getCurrentUser();
-        if (user.role !== 'admin') {
+    // 强制管理员权限拦截 (异步)
+    async requireAdmin() {
+        const session = await this.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // 检查 profiles 表中的 role 字段
+        const { data: profile, error } = await window.supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+        if (error || !profile || profile.role !== 'admin') {
             document.body.innerHTML = `
                 <div style="text-align:center; margin-top:50px; font-family:sans-serif;">
                     <h1 style="color:#e74c3c">403 Forbidden</h1>
@@ -113,30 +98,17 @@ const AuthService = {
             return false;
         }
         return true;
-    },
-
-    // --- 内部私有方法 ---
-
-    // 模拟生成 JWT Token 并建立会话
-    _createSession(user) {
-        // 伪造一个 JWT (Header.Payload.Signature)
-        const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-        const payload = btoa(JSON.stringify({
-            sub: user.id,
-            role: user.role,
-            name: user.name,
-            iat: Date.now(),
-            exp: Date.now() + 1000 * 60 * 60 * 24 * 7 // 7天过期
-        }));
-        const signature = "mock_signature_hash"; // 静态模拟无法真签名
-        
-        const token = `${header}.${payload}.${signature}`;
-        
-        localStorage.setItem('pet_auth_token', token);
-        localStorage.setItem('pet_current_user', JSON.stringify(user));
     }
 };
 
+// 监听 Auth 状态变化
+window.supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+        console.log('User signed in:', session.user);
+    } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+    }
+});
+
 // 导出到全局
 window.AuthService = AuthService;
-

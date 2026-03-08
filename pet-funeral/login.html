@@ -185,13 +185,14 @@
         <form id="password-form" class="login-form hidden">
             <div class="form-group">
                 <i class="fas fa-user form-icon"></i>
-                <input type="text" class="form-control" id="acc-username" placeholder="邮箱 / 用户名" required>
+                <input type="email" class="form-control" id="acc-username" placeholder="邮箱" required>
             </div>
             <div class="form-group">
                 <i class="fas fa-lock form-icon"></i>
                 <input type="password" class="form-control" id="acc-password" placeholder="密码" required>
             </div>
             <button type="submit" class="btn-block">立即登录</button>
+            <button type="button" class="btn-block btn-outline" onclick="handleRegister()">注册新账号</button>
             <div style="text-align:right; margin-top:10px; font-size:12px;">
                 <a href="#" style="color:#666;">忘记密码?</a>
             </div>
@@ -205,144 +206,114 @@
         </div>
 
         <div class="tips">
-            <p>演示账号: xzcdd / 521125xnx (管理员)</p>
-            <p>演示账号: user / 123 (普通用户)</p>
+            <p>提示: 首次使用请点击“注册新账号”</p>
+            <p>如需进入管理后台，请联系管理员设置权限</p>
         </div>
     </div>
 
-    <!-- 1. 内嵌核心权限逻辑 (确保加载) -->
+    <!-- 1. 引入外部脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
+
     <script>
-        const AuthService = {
-            users: [
-                {
-                    id: 'admin_001',
-                    username: 'xzcdd',
-                    password: '521125xnx',
-                    role: 'admin',
-                    name: '超级管理员'
-                },
-                {
-                    id: 'user_001',
-                    username: 'user',
-                    password: '123',
-                    role: 'user',
-                    name: '普通用户'
-                }
-            ],
-
-            isAuthenticated() {
-                const token = localStorage.getItem('pet_auth_token');
-                return !!token; // 只要 token 存在就认为已登录
-            },
-
-            getCurrentUser() {
-                const userStr = localStorage.getItem('pet_current_user');
-                return userStr ? JSON.parse(userStr) : null;
-            },
-
-            async login(params) {
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        let user = null;
-                        if (params.type === 'password') {
-                            user = this.users.find(u => 
-                                (u.username === params.account || u.email === params.account) && 
-                                u.password === params.password
-                            );
-                        } else if (params.type === 'mobile') {
-                            if (params.code === '123456') user = this.users[1];
-                        } else if (params.type === 'wechat') {
-                            user = this.users[1];
-                        }
-
-                        if (user) {
-                            this._createSession(user);
-                            resolve({ success: true, user });
-                        } else {
-                            reject({ success: false, message: '账号或密码错误' });
-                        }
-                    }, 500);
-                });
-            },
-
-            _createSession(user) {
-                // 生成一个简单的 Token 标识
-                const token = `token-${user.id}-${Date.now()}`;
-                localStorage.setItem('pet_auth_token', token);
-                localStorage.setItem('pet_current_user', JSON.stringify(user));
-            }
-        };
-        window.AuthService = AuthService;
-    </script>
-    <script>
+        // Tab 切换逻辑
         function switchTab(type) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.login-form').forEach(f => f.classList.add('hidden'));
             
-            event.target.classList.add('active');
-            document.getElementById(type + '-form').classList.remove('hidden');
+            // Find tab by text content (approximate) or index
+            const tabs = document.querySelectorAll('.tab');
+            if (type === 'mobile') { tabs[0].classList.add('active'); document.getElementById('mobile-form').classList.remove('hidden'); }
+            if (type === 'password') { tabs[1].classList.add('active'); document.getElementById('password-form').classList.remove('hidden'); }
+            if (type === 'wechat') { tabs[2].classList.add('active'); document.getElementById('wechat-form').classList.remove('hidden'); }
         }
 
-        // 模拟发送验证码
-        function sendCaptcha(btn) {
-            btn.disabled = true;
-            let count = 60;
-            btn.innerText = `${count}s后重试`;
+        // 默认显示账号密码登录
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('password');
+        });
+
+        // 账号密码登录处理
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const email = document.getElementById('acc-username').value;
+            const password = document.getElementById('acc-password').value;
             
-            alert('【模拟短信】您的验证码是：123456');
-            document.getElementById('mobile-code').value = '123456';
-
-            const timer = setInterval(() => {
-                count--;
-                btn.innerText = `${count}s后重试`;
-                if (count <= 0) {
-                    clearInterval(timer);
-                    btn.disabled = false;
-                    btn.innerText = '获取验证码';
-                }
-            }, 1000);
-        }
-
-        // 处理登录
-        async function handleLogin(type, data) {
-            const btn = document.querySelector(`#${type}-form button[type="submit"]`);
-            if(btn) {
-                btn.disabled = true;
-                btn.innerText = '登录中...';
-            }
+            btn.disabled = true;
+            btn.innerText = '登录中...';
 
             try {
-                const res = await AuthService.login({ type, ...data });
+                const res = await AuthService.login(email, password);
                 if (res.success) {
-                    // 跳转逻辑
                     const redirect = sessionStorage.getItem('auth_redirect') || 'index.html';
                     sessionStorage.removeItem('auth_redirect');
                     window.location.href = redirect;
+                } else {
+                    alert('登录失败: ' + res.message);
+                    btn.disabled = false;
+                    btn.innerText = '立即登录';
                 }
             } catch (err) {
-                alert(err.message);
-                if(btn) {
-                    btn.disabled = false;
-                    btn.innerText = '重试';
+                console.error(err);
+                alert('系统错误');
+                btn.disabled = false;
+                btn.innerText = '立即登录';
+            }
+        });
+
+        // 注册功能
+        async function handleRegister() {
+            const email = document.getElementById('acc-username').value;
+            const password = document.getElementById('acc-password').value;
+
+            if (!email || !password) {
+                return alert('请输入邮箱和密码');
+            }
+
+            if (confirm('确定使用当前邮箱和密码注册吗？')) {
+                const res = await AuthService.register(email, password);
+                if (res.success) {
+                    // 注册成功后，尝试自动登录并创建 Profile
+                    const loginRes = await AuthService.login(email, password);
+                    if (loginRes.success) {
+                        // 插入 profile 数据 (使用 AuthService 的 login 结果，注意 login 返回的是对象 {success: true, user: ...})
+                        const user = loginRes.user;
+                        if (user) {
+                            const { error: profileError } = await window.supabaseClient
+                                .from('profiles')
+                                .upsert({ // 使用 upsert 避免主键冲突
+                                    id: user.id,
+                                    username: email.split('@')[0],
+                                    role: 'user',
+                                    avatar_url: `https://ui-avatars.com/api/?name=${email}&background=random`
+                                }, { onConflict: 'id' });
+                            
+                            if (profileError) {
+                                console.error('Profile creation failed:', profileError);
+                            }
+                        }
+
+                        alert('注册成功并已登录！');
+                        window.location.href = 'index.html';
+                    } else {
+                        alert('注册成功，但自动登录失败，请手动登录。');
+                    }
+                } else {
+                    alert('注册失败: ' + res.message);
                 }
             }
         }
 
+        // 模拟其他登录方式 (保留 UI 但提示)
         document.getElementById('mobile-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            handleLogin('mobile', { code: document.getElementById('mobile-code').value });
-        });
-
-        document.getElementById('password-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleLogin('password', {
-                account: document.getElementById('acc-username').value,
-                password: document.getElementById('acc-password').value
-            });
+            alert('手机验证码登录暂未开放，请使用账号密码登录。');
         });
 
         function mockWechatScan() {
-            handleLogin('wechat', {});
+            alert('微信登录暂未开放，请使用账号密码登录。');
         }
     </script>
 </body>

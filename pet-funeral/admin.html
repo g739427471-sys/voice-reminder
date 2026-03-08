@@ -421,87 +421,57 @@
     <!-- 通知容器 -->
     <div id="notification-container"></div>
 
-    <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
-    <script>
-        const AuthService = {
-            users: [], // 后台页面不需要再次定义用户列表，因为登录在 login.html 完成
+    <!-- 1. 引入外部脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
 
-            isAuthenticated() {
-                const token = localStorage.getItem('pet_auth_token');
-                return !!token;
-            },
-
-            getCurrentUser() {
-                const userStr = localStorage.getItem('pet_current_user');
-                return userStr ? JSON.parse(userStr) : null;
-            },
-
-            logout() {
-                localStorage.removeItem('pet_auth_token');
-                localStorage.removeItem('pet_current_user');
-                window.location.href = 'login.html';
-            },
-
-            requireLogin(redirectUrl = 'login.html') {
-                if (!this.isAuthenticated()) {
-                    sessionStorage.setItem('auth_redirect', window.location.href);
-                    window.location.href = redirectUrl;
-                    return false;
-                }
-                return true;
-            },
-
-            requireAdmin() {
-                if (!this.requireLogin('login.html')) return false;
-                const user = this.getCurrentUser();
-                if (!user || user.role !== 'admin') {
-                    document.body.innerHTML = `
-                        <div style="text-align:center;margin-top:100px;font-family:sans-serif;">
-                            <h1 style="color:#e74c3c;font-size:48px;">403 Forbidden</h1>
-                            <p style="font-size:18px;color:#666;">您当前登录的账号无权访问管理后台</p>
-                            <div style="margin-top:20px;">
-                                <a href="index.html" style="color:#3498db;text-decoration:none;margin-right:20px;">返回首页</a>
-                                <a href="#" onclick="AuthService.logout()" style="color:#666;text-decoration:none;">退出并切换账号</a>
-                            </div>
-                        </div>`;
-                    return false;
-                }
-                return true;
-            }
-        };
-        window.AuthService = AuthService;
-    </script>
     <script>
         // 权限检查：必须是管理员才能访问
-        if (!AuthService.requireAdmin()) {
-            throw new Error('Access Denied');
-        }
-
-        // --- 数据逻辑 ---
-        const defaultProducts = [
-            { id: 1, name: "纯铜纪念币", desc: "定制刻字", price: 199, category: "memorial", image: "https://via.placeholder.com/100" },
-            { id: 3, name: "云端祈福灯", desc: "点亮7天", price: 9.9, category: "virtual", image: "https://via.placeholder.com/100" }
-        ];
-
-        function getProducts() {
-            const stored = localStorage.getItem('pet_products');
-            return stored ? JSON.parse(stored) : defaultProducts;
-        }
-
-        function saveProducts(products) {
-            localStorage.setItem('pet_products', JSON.stringify(products));
+        async function checkAdmin() {
+            const isAdmin = await AuthService.requireAdmin();
+            if (!isAdmin) return;
+            
+            // 初始化数据
             renderProducts();
         }
+        
+        checkAdmin();
 
-        function getOrders() {
-            const stored = localStorage.getItem('pet_orders');
-            return stored ? JSON.parse(stored) : [];
+        // --- 数据逻辑 (Supabase) ---
+        let productsCache = [];
+        let ordersCache = [];
+
+        async function getProducts() {
+            const { data, error } = await window.supabaseClient
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error('Error fetching products:', error);
+                return [];
+            }
+            return data;
         }
 
-        function saveOrders(orders) {
-            localStorage.setItem('pet_orders', JSON.stringify(orders));
-            renderOrders();
+        async function getOrders() {
+            // 需要关联查询 order_items
+            const { data, error } = await window.supabaseClient
+                .from('orders')
+                .select(`
+                    *,
+                    items:order_items(*)
+                `)
+                .order('created_at', { ascending: false });
+                
+            if (error) {
+                console.error('Error fetching orders:', error);
+                return [];
+            }
+            return data;
         }
+
 
         // --- 视图切换 ---
         function showView(viewName) {
@@ -521,8 +491,8 @@
         }
 
         // --- 商品渲染 ---
-        function renderProducts() {
-            const products = getProducts();
+        async function renderProducts() {
+            const products = await getProducts();
             const tbody = document.getElementById('product-table-body');
             tbody.innerHTML = '';
 
@@ -530,7 +500,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${p.id}</td>
-                    <td><img src="${p.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
+                    <td><img src="${p.image || ''}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
                     <td>${p.name}</td>
                     <td>${
                         p.category === 'memorial' ? '纪念用品' : 
@@ -547,26 +517,28 @@
         }
 
         // --- 订单渲染 ---
-        function renderOrders() {
-            const orders = getOrders();
+        async function renderOrders() {
+            const orders = await getOrders();
+            ordersCache = orders; // 缓存供打印使用
             const tbody = document.getElementById('order-table-body');
             tbody.innerHTML = '';
 
             orders.forEach(o => {
                 const tr = document.createElement('tr');
-                const itemsSummary = o.items.map(i => i.name).join(', ');
-                const statusClass = o.status === '待处理' ? 'status-pending' : 'status-completed';
+                const itemsSummary = o.items ? o.items.map(i => i.product_name).join(', ') : '无商品';
+                const statusClass = o.status === 'pending' || o.status === 'paid' ? 'status-pending' : (o.status === 'cancelled' ? 'status-cancelled' : 'status-completed');
                 
                 tr.innerHTML = `
                     <td>${o.id}</td>
-                    <td>${o.date}</td>
-                    <td>¥${o.total.toFixed(2)}</td>
+                    <td>${new Date(o.created_at).toLocaleString()}</td>
+                    <td>¥${o.total_amount.toFixed(2)}</td>
                     <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${itemsSummary}">${itemsSummary}</td>
                     <td><span class="status-badge ${statusClass}">${o.status}</span></td>
                     <td>
-                        ${o.status === '待处理' ? `<button class="action-btn btn-success" onclick="completeOrder('${o.id}')">完成</button>` : ''}
-                        <button class="action-btn" style="background:#3498db; color:white;" onclick="printOrder('${o.id}')">打印</button>
-                        <button class="action-btn btn-delete" onclick="deleteOrder('${o.id}')">删除</button>
+                        ${o.status === 'paid' ? `<button class="action-btn btn-success" onclick="updateOrderStatus(${o.id}, 'completed')">完成</button>` : ''}
+                        ${o.status === 'paid' ? `<button class="action-btn" style="background:#3498db; color:white;" onclick="updateOrderStatus(${o.id}, 'shipped')">发货</button>` : ''}
+                        <button class="action-btn" style="background:#9b59b6; color:white;" onclick="printOrder(${o.id})">打印</button>
+                        <button class="action-btn btn-delete" onclick="deleteOrder(${o.id})">删除</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -595,19 +567,19 @@
         }
 
         // --- 商品操作 ---
-        function openProductModal(product = null) {
+        async function openProductModal(product = null) {
             const modal = document.getElementById('product-modal');
             const form = document.getElementById('product-form');
             
             if (product) {
                 document.getElementById('p-id').value = product.id;
                 document.getElementById('p-name').value = product.name;
-                document.getElementById('p-desc').value = product.desc;
+                document.getElementById('p-desc').value = product.description || '';
                 document.getElementById('p-price').value = product.price;
                 document.getElementById('p-category').value = product.category;
                 
                 // 回显类型
-                const type = product.type || 'goods'; // 默认为goods
+                const type = product.type || 'goods'; 
                 document.querySelector(`input[name="p-type"][value="${type}"]`).checked = true;
 
                 // 回显图片
@@ -633,65 +605,67 @@
             document.getElementById('product-modal').style.display = 'none';
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if (confirm('确定删除吗？')) {
-                const products = getProducts().filter(p => p.id !== id);
-                saveProducts(products);
+                const { error } = await window.supabaseClient
+                    .from('products')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) {
+                    alert('删除失败: ' + error.message);
+                } else {
+                    renderProducts();
+                }
             }
         }
 
-        function editProduct(id) {
-            const product = getProducts().find(p => p.id === id);
+        async function editProduct(id) {
+            const products = await getProducts();
+            const product = products.find(p => p.id === id);
             openProductModal(product);
         }
 
-        document.getElementById('product-form').addEventListener('submit', (e) => {
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('p-id').value;
             const type = document.querySelector('input[name="p-type"]:checked').value;
-            const image = document.getElementById('p-image-base64').value || 'https://via.placeholder.com/150';
+            const image = document.getElementById('p-image-base64').value;
 
-            const newProduct = {
-                id: id ? parseInt(id) : Date.now(),
+            const productData = {
                 name: document.getElementById('p-name').value,
-                desc: document.getElementById('p-desc').value,
+                description: document.getElementById('p-desc').value,
                 price: parseFloat(document.getElementById('p-price').value),
                 category: document.getElementById('p-category').value,
-                type: type, // 新增类型字段
-                image: image // 存 Base64
+                type: type,
+                image: image
             };
 
-            let products = getProducts();
+            let error;
             if (id) {
-                const index = products.findIndex(p => p.id == id);
-                // 合并现有字段 (保留 sales, rating 等)
-                products[index] = { ...products[index], ...newProduct };
+                // Update
+                const { error: updateError } = await window.supabaseClient
+                    .from('products')
+                    .update(productData)
+                    .eq('id', id);
+                error = updateError;
             } else {
-                // 新增商品，初始化销量评分
-                newProduct.sales = 0;
-                newProduct.rating = 5.0;
-                products.push(newProduct);
+                // Insert
+                const { error: insertError } = await window.supabaseClient
+                    .from('products')
+                    .insert(productData);
+                error = insertError;
             }
             
-            saveProducts(products);
-            closeModal();
+            if (error) {
+                alert('保存失败: ' + error.message);
+            } else {
+                closeModal();
+                renderProducts();
+            }
         });
 
         // --- 订单操作 ---
-        // 实时监听订单更新 (storage 事件)
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'pet_orders') {
-                const oldOrders = e.oldValue ? JSON.parse(e.oldValue) : [];
-                const newOrders = e.newValue ? JSON.parse(e.newValue) : [];
-                
-                // 如果订单数量增加，说明有新订单
-                if (newOrders.length > oldOrders.length) {
-                    const latestOrder = newOrders[newOrders.length - 1];
-                    showNotification(latestOrder);
-                    renderOrders(); // 刷新列表
-                }
-            }
-        });
 
         function showNotification(order) {
             const container = document.getElementById('notification-container');
@@ -702,46 +676,87 @@
                     <div style="font-weight:bold; margin-bottom:5px;">新订单提醒!</div>
                     <div style="font-size:0.9rem; color:#666;">
                         订单号: ${order.id}<br>
-                        金额: ¥${order.total.toFixed(2)}
+                        金额: ¥${order.total_amount.toFixed(2)}
                     </div>
                 </div>
                 <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer; font-size:1.2rem; color:#999;">&times;</button>
             `;
             container.appendChild(toast);
             
-            // 播放提示音 (可选)
-            // const audio = new Audio('notification.mp3'); audio.play().catch(e=>{});
-
-            // 5秒后自动消失
             setTimeout(() => {
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
         }
 
-        function completeOrder(id) {
-            updateOrderStatus(id, '已完成');
-        }
-
-        function shipOrder(id) {
-            updateOrderStatus(id, '已发货');
-        }
-
-        function updateOrderStatus(id, status) {
-            let orders = getOrders();
-            const index = orders.findIndex(o => o.id === id);
-            if (index !== -1) {
-                orders[index].status = status;
-                localStorage.setItem('pet_orders', JSON.stringify(orders)); // 这会触发其他页面的 storage 事件，但当前页面不会
+        async function updateOrderStatus(id, status) {
+            const { error } = await window.supabaseClient
+                .from('orders')
+                .update({ status: status })
+                .eq('id', id);
+            
+            if (error) {
+                alert('更新状态失败: ' + error.message);
+            } else {
                 renderOrders();
             }
         }
 
-        function deleteOrder(id) {
+        async function deleteOrder(id) {
             if (confirm('确定删除订单吗？')) {
-                let orders = getOrders().filter(o => o.id !== id);
-                saveOrders(orders);
+                const { error } = await window.supabaseClient
+                    .from('orders')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) {
+                    alert('删除失败: ' + error.message);
+                } else {
+                    renderOrders();
+                }
             }
+        }
+        
+        // 打印功能 (依赖 ordersCache)
+        function printOrder(orderId) {
+            const order = ordersCache.find(o => o.id === orderId);
+            if (!order) return;
+
+            // 填充数据
+            document.getElementById('inv-id').innerText = order.id;
+            document.getElementById('inv-date').innerText = new Date(order.created_at).toLocaleString();
+            document.getElementById('inv-pay').innerText = order.payment_method === 'alipay' ? '支付宝' : '微信支付';
+            
+            const addr = order.shipping_address || { name: '未知', phone: '未知', region: '', detail: '无详细地址' };
+            document.getElementById('inv-name').innerText = addr.name;
+            document.getElementById('inv-phone').innerText = addr.phone;
+            document.getElementById('inv-addr').innerText = addr.region + ' ' + addr.detail;
+            
+            document.getElementById('inv-print-time').innerText = new Date().toLocaleString();
+
+            const itemsBody = document.getElementById('inv-items');
+            itemsBody.innerHTML = '';
+            
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    itemsBody.innerHTML += `
+                        <tr>
+                            <td style="border:1px solid #000; padding:8px;">${item.product_name} ${item.pet_name ? '('+item.pet_name+')' : ''}</td>
+                            <td style="border:1px solid #000; padding:8px;">¥${item.product_price}</td>
+                            <td style="border:1px solid #000; padding:8px;">${item.quantity}</td>
+                            <td style="border:1px solid #000; padding:8px;">¥${(item.product_price * item.quantity).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                 itemsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:10px;">无商品详情</td></tr>';
+            }
+            
+            document.getElementById('inv-total').innerText = '¥' + order.total_amount.toFixed(2);
+            document.getElementById('inv-msg').innerText = order.items && order.items[0] && order.items[0].pet_message ? order.items[0].pet_message : '无';
+
+            // 调用打印
+            window.print();
         }
 
         // 初始化

@@ -697,107 +697,39 @@
         </div>
     </div>
 
-    <!-- 1. 权限管理模块 (内嵌，确保最先执行) -->
-    <script>
-        const AuthService = {
-            // 前台不需要定义用户列表，只负责读取状态
-            isAuthenticated() {
-                const token = localStorage.getItem('pet_auth_token');
-                return !!token;
-            },
-
-            getCurrentUser() {
-                const userStr = localStorage.getItem('pet_current_user');
-                return userStr ? JSON.parse(userStr) : null;
-            },
-
-            logout() {
-                localStorage.removeItem('pet_auth_token');
-                localStorage.removeItem('pet_current_user');
-                window.location.reload();
-            },
-
-            requireLogin(redirectUrl = 'login.html') {
-                if (!this.isAuthenticated()) {
-                    sessionStorage.setItem('auth_redirect', window.location.href);
-                    window.location.href = redirectUrl;
-                    return false;
-                }
-                return true;
-            }
-        };
-        window.AuthService = AuthService;
-    </script>
+    <!-- 1. 引入外部脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
 
     <script>
-        // --- 模拟数据库 (LocalStorage) ---
-        // 初始化默认数据 (增加销量和评分字段用于演示排序)
-        const defaultProducts = [
-            {
-                id: 1,
-                name: "纯铜纪念币",
-                desc: "定制刻字，永久保存爱宠照片与信息",
-                price: 199,
-                category: "memorial",
-                type: "goods",
-                stock: 99,
-                sales: 230,
-                rating: 4.9,
-                image: "https://images.unsplash.com/photo-1620407632601-38c232c69476?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-            },
-            {
-                id: 2,
-                name: "水晶骨灰盅",
-                desc: "高透水晶材质，内置镭射内雕，防潮密封",
-                price: 399,
-                category: "memorial",
-                type: "goods",
-                stock: 15,
-                sales: 85,
-                rating: 4.7,
-                image: "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-            },
-            {
-                id: 3,
-                name: "云端祈福灯",
-                desc: "点亮一盏长明灯，照亮它回家的路 (7天)",
-                price: 9.9,
-                category: "virtual",
-                type: "service",
-                stock: 9999,
-                sales: 1540,
-                rating: 5.0,
-                image: "https://images.unsplash.com/photo-1542665093-36614488b394?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-            },
-            {
-                id: 4,
-                name: "私人订制葬礼",
-                desc: "专车接送，独立告别室，全程影像记录",
-                price: 1299,
-                category: "service",
-                type: "service",
-                stock: 5,
-                sales: 42,
-                rating: 4.9,
-                image: "https://images.unsplash.com/photo-1596395819057-d375226c7830?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-            }
-        ];
-
+        // --- 数据逻辑 (Supabase) ---
+        
         // 全局状态
         let currentCategory = 'all';
         let currentSort = 'default';
         let currentSearch = '';
         let currentModalProduct = null;
+        let productsCache = [];
 
-        // 获取商品数据
-        function getProducts() {
-            const stored = localStorage.getItem('pet_products');
-            if (!stored) {
-                localStorage.setItem('pet_products', JSON.stringify(defaultProducts));
-                return defaultProducts;
+        // 获取商品数据 (异步)
+        async function getProducts() {
+            if (productsCache.length > 0) return productsCache;
+
+            const { data, error } = await window.supabaseClient
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error('Error fetching products:', error);
+                return [];
             }
-            return JSON.parse(stored);
+            
+            productsCache = data;
+            return data;
         }
+
 
         // --- 购物车逻辑 ---
         let cart = JSON.parse(localStorage.getItem('pet_cart')) || [];
@@ -1001,12 +933,14 @@
             closeProductModal();
         }
 
-        function checkout(directItems = null) {
+        async function checkout(directItems = null) {
             // 如果传入 directItems，说明是立即购买；否则是购物车结算
             const itemsToCheckout = directItems || cart;
             
             if (itemsToCheckout.length === 0) return alert('请选择商品');
-            if (!AuthService.requireLogin()) return;
+            
+            const isLogged = await AuthService.requireLogin();
+            if (!isLogged) return;
 
             currentCheckoutItems = itemsToCheckout;
 
@@ -1052,30 +986,63 @@
             currentCheckoutItems = [];
         }
 
-        function submitOrder() {
+        async function submitOrder() {
             if (!selectedAddressId) return alert('请选择收货地址');
             
             const addresses = getAddresses();
             const address = addresses.find(a => a.id === selectedAddressId);
-            const user = AuthService.getCurrentUser();
+            const user = await AuthService.getCurrentUser();
             
-            const newOrder = {
-                id: 'ORD-' + Date.now(),
-                userId: user.id,
-                userName: user.name,
-                items: currentCheckoutItems, // 使用当前结算列表
-                total: currentCheckoutItems.reduce((sum, item) => sum + item.price * item.qty, 0),
-                address: address, // 保存地址快照
-                payMethod: document.querySelector('input[name="pay-method"]:checked').value,
-                date: new Date().toLocaleString(),
-                status: '已付款' // 模拟直接付款成功
-            };
+            if (!user) {
+                alert('登录已失效，请重新登录');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const total = currentCheckoutItems.reduce((sum, item) => sum + item.price * item.qty, 0);
             
-            const orders = JSON.parse(localStorage.getItem('pet_orders')) || [];
-            orders.push(newOrder);
-            localStorage.setItem('pet_orders', JSON.stringify(orders));
+            // 1. 创建订单
+            const { data: orderData, error: orderError } = await window.supabaseClient
+                .from('orders')
+                .insert({
+                    user_id: user.id,
+                    total_amount: total,
+                    status: 'paid', // 模拟支付成功
+                    payment_method: document.querySelector('input[name="pay-method"]:checked').value,
+                    shipping_address: address
+                })
+                .select()
+                .single();
+
+            if (orderError) {
+                console.error('Create order error:', orderError);
+                alert('创建订单失败，请重试');
+                return;
+            }
+
+            // 2. 创建订单项
+            const orderItems = currentCheckoutItems.map(item => ({
+                order_id: orderData.id,
+                product_id: item.id,
+                product_name: item.name,
+                product_price: item.price,
+                quantity: item.qty,
+                pet_name: item.petName,
+                pet_message: item.petMessage
+            }));
+
+            const { error: itemsError } = await window.supabaseClient
+                .from('order_items')
+                .insert(orderItems);
+
+            if (itemsError) {
+                console.error('Create order items error:', itemsError);
+                alert('创建订单详情失败，请联系客服');
+                // 此时应该回滚订单，但这里简化处理
+                return;
+            }
             
-            // 如果是购物车结算，清空购物车；如果是立即购买，不影响购物车
+            // 如果是购物车结算，清空购物车
             if (currentCheckoutItems === cart) {
                 cart = [];
                 updateCartUI();
@@ -1085,13 +1052,13 @@
             closeCheckoutModal();
             
             // 模拟支付成功页
-            alert(`支付成功！\n订单号: ${newOrder.id}\n支付金额: ¥${newOrder.total.toFixed(2)}\n我们将尽快发货至: ${address.region} ${address.detail}`);
+            alert(`支付成功！\n订单号: ${orderData.id}\n支付金额: ¥${total.toFixed(2)}\n我们将尽快发货至: ${address.region} ${address.detail}`);
         }
 
         // --- 核心展示逻辑 (搜索/排序/筛选) ---
 
-        function renderProducts() {
-            let products = getProducts();
+        async function renderProducts() {
+            let products = await getProducts();
             
             // 1. 分类筛选
             if (currentCategory !== 'all') {
@@ -1101,7 +1068,7 @@
             // 2. 关键词搜索
             if (currentSearch) {
                 const term = currentSearch.toLowerCase();
-                products = products.filter(p => p.name.toLowerCase().includes(term) || p.desc.toLowerCase().includes(term));
+                products = products.filter(p => p.name.toLowerCase().includes(term) || (p.description || '').toLowerCase().includes(term));
             }
             
             // 3. 排序
@@ -1120,12 +1087,8 @@
             } else {
                 products.forEach(p => {
                     // 逻辑升级：完全基于后台配置的 type 判断按钮文案和行为
-                    // 兼容旧数据：如果 type 未定义，默认视为 goods (除非 category 明显是服务)
                     let isService = p.type === 'service';
-                    if (!p.type) {
-                        isService = p.category === 'virtual' || p.category === 'service';
-                    }
-
+                    
                     const btnText = isService ? '立即预约' : '加入购物车';
                     const btnIcon = isService ? 'fa-calendar-check' : 'fa-shopping-cart';
                     
@@ -1133,16 +1096,16 @@
                     div.className = 'product-card';
                     // 点击卡片任意位置打开详情
                     div.onclick = (e) => {
-                        // 如果点击的是按钮，不触发卡片点击（虽然按钮逻辑也是开详情，但为了逻辑清晰）
+                        // 如果点击的是按钮，不触发卡片点击
                         if(e.target.closest('.add-btn')) return;
                         openProductModal(p);
                     };
                     
                     div.innerHTML = `
-                        <div class="product-img" style="background-image: url('${p.image}')"></div>
+                        <div class="product-img" style="background-image: url('${p.image || ''}')"></div>
                         <div class="product-info">
                             <div class="product-title">${p.name}</div>
-                            <div class="product-desc">${p.desc}</div>
+                            <div class="product-desc">${p.description || ''}</div>
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                                 <div class="product-price">¥${p.price}</div>
                                 <div style="font-size:0.8rem; color:#999;">销量 ${p.sales || 0}</div>
@@ -1160,11 +1123,9 @@
             updateFilterUI();
         }
 
-        function handleCardBtnClick(id) {
-            const p = getProducts().find(i => i.id === id);
-            // 服务/虚拟商品直接开弹窗，实物商品也开弹窗（模仿淘宝，先看详情）
-            // 或者：实物直接加购物车，服务开弹窗。
-            // 策略：统一打开详情页，体验更好
+        async function handleCardBtnClick(id) {
+            const products = await getProducts();
+            const p = products.find(i => i.id === id);
             openProductModal(p);
         }
 
@@ -1205,19 +1166,15 @@
             const overlay = document.getElementById('product-modal-overlay');
             
             // 基础信息
-            document.getElementById('modal-main-img').src = product.image;
+            document.getElementById('modal-main-img').src = product.image || '';
             document.getElementById('modal-product-title').innerText = product.name;
             document.getElementById('modal-right-price').innerText = '¥' + product.price;
             document.getElementById('modal-sales').innerText = (product.sales || 0) + '+';
             document.getElementById('modal-stock').innerText = (product.stock !== undefined ? product.stock : 99);
-            document.getElementById('modal-full-desc').innerText = product.desc + "\n\n(此处为详细描述占位符，展示商品的详细规格、材质、服务流程等信息。)";
+            document.getElementById('modal-full-desc').innerText = (product.description || '') + "\n\n(此处为详细描述占位符，展示商品的详细规格、材质、服务流程等信息。)";
 
             // 动态表单 (完全依赖后台配置的 type)
             let isService = product.type === 'service';
-            if (!product.type) {
-                // 兼容逻辑
-                isService = product.category === 'virtual' || product.category === 'service';
-            }
             
             const formArea = document.getElementById('modal-form-area');
             const actionBtn = document.getElementById('modal-action-btn');
@@ -1247,10 +1204,7 @@
                 `;
                 actionBtn.innerText = isOutOfStock ? '暂时缺货' : '立即购买';
                 actionBtn.onclick = () => {
-                    addToCartFromModal(false); 
-                    // 立即购买，不走购物车，直接结算 (修改：传递单品参数)
-                    // 但这里 addToCartFromModal 逻辑是加购物车。我们需要区分。
-                    // 修正逻辑：点击“立即购买”时，不加购物车，而是直接打开结算弹窗。
+                    // 立即购买，不走购物车，直接结算
                     buyNow();
                 };
             }
@@ -1259,8 +1213,11 @@
             if(isOutOfStock) {
                 actionBtn.disabled = true;
                 actionBtn.style.background = '#ccc';
-                document.querySelector('button[onclick="addToCartFromModal(true)"]').disabled = true;
-                document.querySelector('button[onclick="addToCartFromModal(true)"]').style.background = '#ccc';
+                const cartBtn = document.querySelector('button[onclick="addToCartFromModal(true)"]');
+                if(cartBtn) {
+                   cartBtn.disabled = true;
+                   cartBtn.style.background = '#ccc';
+                }
             } else {
                 actionBtn.disabled = false;
                 actionBtn.style.background = ''; // 恢复默认
@@ -1397,13 +1354,22 @@
         }
 
         // --- 页面初始化 ---
-        function checkLoginState() {
+        async function checkLoginState() {
             const userArea = document.getElementById('user-area');
-            if (AuthService.isAuthenticated()) {
-                const user = AuthService.getCurrentUser();
-                const displayName = user.username || user.name || '用户';
+            const user = await AuthService.getCurrentUser();
+            
+            if (user) {
+                // Fetch profile to get role
+                const { data: profile } = await window.supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                const displayName = (profile && profile.username) || user.email || '用户';
                 let html = `<span style="font-size:0.9rem; color:#666; margin-right:10px;">你好, ${displayName}</span>`;
-                if (user.role === 'admin') {
+                
+                if (profile && profile.role === 'admin') {
                     html += `<a href="admin.html" style="text-decoration:none; color:var(--primary-color); margin-right:10px;"><i class="fas fa-cog"></i> 后台</a>`;
                 }
                 html += `<a href="#" onclick="AuthService.logout()" style="text-decoration:none; color:#999;"><i class="fas fa-sign-out-alt"></i> 退出</a>`;
